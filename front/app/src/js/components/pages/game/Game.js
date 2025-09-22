@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import { KTX2Loader } from '/node_modules/three/examples/jsm/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from '/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js';
-import pedro from '/3d_models/pleasehelpme.glb?url';
-import cactus from '/3d_models/cactus1.glb?url';
+import pedro from '/3d_models/pedro.glb?url';
+import cactus from '/3d_models/cactus.glb?url';
 import bullet from '/3d_models/bullet.glb?url';
 import fence from '/3d_models/fence.glb?url';
 import couch from '/3d_models/sofa.glb?url';
@@ -11,9 +11,9 @@ import chair from '/3d_models/chair.glb?url';
 import dressing from '/3d_models/dressing.glb?url';
 import groundtexture from '/img/ground_texture.png?url';
 import coin from '/3d_models/coin.glb?url';
-import carboard from '/3d_models/carboard.glb?url';
-import carboard2 from '/3d_models/carboard2.glb?url';
-import carboard3 from '/3d_models/carboard3.glb?url';
+import cardboard from '/3d_models/cardboard.glb?url';
+import cardboard2 from '/3d_models/cardboard2.glb?url';
+import cardboard3 from '/3d_models/cardboard3.glb?url';
 import table from '/3d_models/table.glb?url';
 import { router } from '@router';
 import { auth } from '@auth';
@@ -25,6 +25,32 @@ import { DEFAULT_AVATAR } from '@env';
 
 /* eslint no-var: "off" */
 /* eslint-disable new-cap */
+
+/**
+ * Standardized error logging utility
+ */
+const GameLogger = {
+  error: (context, message, error = null) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.error(`[Game:${context}] ERROR: ${message}`, error || '');
+    }
+  },
+  warn: (context, message) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[Game:${context}] WARNING: ${message}`);
+    }
+  },
+  info: (context, message) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Game:${context}] INFO: ${message}`);
+    }
+  },
+  debug: (context, message) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Game:${context}] DEBUG: ${message}`);
+    }
+  },
+};
 
 /**
  * Game Component - 3D Pong Game Implementation
@@ -67,8 +93,10 @@ export class Game extends HTMLElement {
 
     // Predefined rotation angles for player models
     this.modelRotation = [
-      [this.degreesToRadians(235), this.degreesToRadians(-90)], // Player 1 rotations
-      [this.degreesToRadians(55), this.degreesToRadians(90)], // Player 2 rotations
+      // Player 1 rotations: [table, couch, chair, dressing]
+      [this.degreesToRadians(235), this.degreesToRadians(-90), this.degreesToRadians(235), this.degreesToRadians(-90)],
+      // Player 2 rotations: [table, couch, chair, dressing]
+      [this.degreesToRadians(55), this.degreesToRadians(90), this.degreesToRadians(55), this.degreesToRadians(90)],
     ];
   }
 
@@ -77,7 +105,7 @@ export class Game extends HTMLElement {
    * Creates scoreboard, timer, buff icons, life points, and overlay
    */
   initializeUIElements() {
-    log.info('Initializing UI elements (optimized)');
+    GameLogger.info('UIInit', 'Initializing UI elements');
 
     // Create scoreboard with appropriate player names
     this.createUIElement('scoreElement', 'game-scoreboard', (element) => {
@@ -95,9 +123,9 @@ export class Game extends HTMLElement {
       const timerWrapper = document.getElementById('game-timer-wrapper');
       if (timerWrapper) {
         timerWrapper.appendChild(this.timerElement);
-        log.info('Timer appended to wrapper');
+        GameLogger.debug('UIInit', 'Timer appended to wrapper');
       } else {
-        log.error('Timer wrapper not found, skipping timer creation');
+        GameLogger.warn('UIInit', 'Timer wrapper not found, skipping timer creation');
       }
     }
 
@@ -134,7 +162,7 @@ export class Game extends HTMLElement {
         this.appendChild(this[propName]);
       }
 
-      log.info(`Created ${propName}`);
+      GameLogger.debug('UIInit', `Created ${propName}`);
     }
   }
 
@@ -144,28 +172,37 @@ export class Game extends HTMLElement {
    */
   async connectedCallback() {
     try {
+      GameLogger.info('Initialization', 'Starting game initialization...');
+
+      // Check user authentication status
       const authStatus = await auth.fetchAuthStatus();
       if (!authStatus.success) {
         if (authStatus.status === 429) {
+          GameLogger.warn('Initialization', 'Rate limited during auth check');
           return; // Rate limited
         }
         if (authStatus.status === 401) {
+          GameLogger.warn('Initialization', 'Session expired, redirecting to login');
           sessionExpiredToast();
         }
         router.redirect('/login');
         return;
       }
+      this.#state.user = authStatus.response;
 
       this.#state.user = authStatus.response;
       this.classList.add('position-relative');
       this.style.overflow = 'hidden'; // Prevent scrollbars
       this.style.position = 'relative'; // Allow overlay positioning
 
-      log.info('Game options before UI init:', this.#state.gameOptions);
+      GameLogger.debug('Initialization', `Game options: ${JSON.stringify(this.#state.gameOptions)}`);
 
       this.initializeUIElements();
       await this.render();
+
+      GameLogger.info('Initialization', 'Game initialization completed successfully');
     } catch (error) {
+      GameLogger.error('Initialization', 'Game initialization failed', error);
       this.handleError('GAME_INIT_FAILED', error);
     }
   }
@@ -204,7 +241,7 @@ export class Game extends HTMLElement {
     // Disable ranked mode for local games
     this.#state.gameOptions.ranked = false;
 
-    log.info('Game type:', this.#state.gameType);
+    GameLogger.debug('Config', `Game type: ${this.#state.gameType}`);
   }
 
   /**
@@ -217,33 +254,131 @@ export class Game extends HTMLElement {
   }
 
   /**
-   * Handle smooth animation transitions for player models
+   * Handle optimized animation transitions for player models
    * @param {Object} ourBumper - Player object
    * @param {number} currentAction - Current animation index
    * @param {number} nextAction - Next animation index
    * @param {number} fadeTime - Transition duration
    */
   handleAnimations(ourBumper, currentAction, nextAction, fadeTime) {
+    if (!ourBumper?.playerGlb || currentAction === nextAction) return;
+
     const ourBumperIndex = ourBumper.dirZ < 1 ? 0 : 1;
 
-    // Smoothly transition between animations
-    if (currentAction != nextAction) {
-      ourBumper.gltfStore.action[currentAction].fadeOut(fadeTime);
-      ourBumper.gltfStore.action[nextAction].reset();
-      ourBumper.gltfStore.action[nextAction].fadeIn(fadeTime);
-      ourBumper.gltfStore.action[nextAction].play();
-      ourBumper.currentAction = nextAction;
-
-      // Update model rotation based on current model and player position
-      if (ourBumper.modelChoosen == 0) ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][0];
-      else ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][1];
+    // Handle animations if pedro model is loaded
+    if (this.isAnimationSystemReady(ourBumper)) {
+      try {
+        const { action } = ourBumper.gltfStore;
+        if (action[currentAction]) action[currentAction].fadeOut(fadeTime);
+        if (action[nextAction]) {
+          action[nextAction].reset().fadeIn(fadeTime).play();
+        }
+      } catch (error) {
+        GameLogger.warn('Animation', `Animation transition failed: ${error.message}`);
+      }
     }
+
+    // Update action state and rotation
+    ourBumper.currentAction = nextAction;
+    if (this.modelRotation) {
+      try {
+        ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][ourBumper.modelChoosen || 0];
+      } catch (error) {
+        GameLogger.warn('Animation', `Rotation update failed: ${error.message}`);
+      }
+    }
+  }
+
+  /**
+   * Check if animation system is ready and pedro model loaded
+   * @param {Object} bumper - Player object to check
+   * @returns {boolean} True if animations are available
+   */
+  isAnimationSystemReady(bumper) {
+    return bumper?.gltfStore?.mixer && bumper.gltfStore.action;
+  }
+
+  /**
+   * Load pedro player model with optimized fallback protection
+   * @param {number} posX - X position for the player
+   * @param {number} posZ - Z position for the player
+   * @param {THREE.Scene} scene - Scene to add the model to
+   * @returns {Promise<Object>} Player model object with animation support
+   */
+  async loadPedroModelWithFallback(posX, posZ, scene) {
+    const gltfStore = { mixer: null, action: new Array(8).fill(null) };
+    let playerGlb;
+
+    try {
+      GameLogger.info('PlayerModel', 'Loading pedro model...');
+
+      // Load with 8-second timeout
+      const gltf = await Promise.race([
+        new Promise((resolve, reject) => this.loaderModel.load(pedro, resolve, undefined, reject)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)),
+      ]);
+
+      if (gltf?.scene && gltf?.animations?.length > 0) {
+        GameLogger.info('PlayerModel', 'Pedro model loaded successfully');
+
+        // Setup pedro model
+        playerGlb = new THREE.Object3D();
+        const model = gltf.scene;
+
+        // Configure shadows
+        model.traverse((node) => node.isMesh && (node.castShadow = true));
+
+        // Setup animations
+        gltfStore.mixer = new THREE.AnimationMixer(model);
+        gltf.animations.forEach((anim, i) => {
+          if (i < 8) {
+            try {
+              gltfStore.action[i] = gltfStore.mixer.clipAction(anim, model);
+              // Configure specific durations
+              if (i === 1) {
+                gltfStore.action[i].setLoop(THREE.LoopOnce, 1);
+                gltfStore.action[i].setDuration(0.4);
+              } else if ([0, 5, 6, 7].includes(i)) {
+                gltfStore.action[i].setDuration(0.18);
+              }
+            } catch (error) {
+              GameLogger.warn('PlayerModel', `Animation ${i} setup failed`, error);
+            }
+          }
+        });
+
+        // Start idle animation
+        if (gltfStore.action[2]) gltfStore.action[2].play();
+
+        model.position.set(posX, 0, 0);
+        model.scale.set(0.5, 0.5, 0.5);
+        playerGlb.add(model);
+      } else {
+        throw new Error('Invalid model data');
+      }
+    } catch (error) {
+      GameLogger.warn('PlayerModel', 'Using fallback model', error);
+      playerGlb = this.createFallbackPlayerModel(posX, posZ);
+    }
+
+    // Position player based on side
+    if (posZ < 0) {
+      playerGlb.rotation.y = this.degreesToRadians(55);
+      playerGlb.position.z = posZ - 1;
+      playerGlb.position.x += 1;
+    } else {
+      playerGlb.rotation.y = this.degreesToRadians(235);
+      playerGlb.position.z = posZ + 1;
+      playerGlb.position.x -= 1;
+    }
+
+    scene.add(playerGlb);
+    return { playerGlb, gltfStore, currentAction: 2 };
   }
 
   /**
    * Create keydown event handler for game controls
    * @param {Object} keyMap - Key state tracking object
-   * @param {Array} Workers - Web workers for power-up timers
    * @param {Array} gameStartAndStop - Game loop control functions
    * @param {Object} gameStateContainer - Game state object
    * @param {Object} Timer - Timer object
@@ -251,17 +386,15 @@ export class Game extends HTMLElement {
    * @param {Array} Bumpers - Player objects
    * @returns {Function} Event handler function
    */
-  createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, TimerCallBack, Bumpers) {
+  createOnDocumentKeyDown(keyMap, gameStartAndStop, gameStateContainer, Timer, TimerCallBack, Bumpers) {
     return (e) => {
       const keyCode = e.code;
       // Handle Player 1 animations (Arrow keys)
-      if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[0] && Bumpers[0].gltfStore.action[5]) {
-        if (keyCode == 'ArrowLeft') {
-          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 0, 0.1);
-        }
-        if (keyCode == 'ArrowRight') {
-          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 5, 0.1);
-        }
+      if (keyCode == 'ArrowLeft') {
+        this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 0, 0.1);
+      }
+      if (keyCode == 'ArrowRight') {
+        this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 5, 0.1);
       }
       // Handle key mapping based on game mode
       if (keyCode != 'KeyA' && keyCode != 'KeyD' && this.#state.gameType == 'ai') {
@@ -272,26 +405,35 @@ export class Game extends HTMLElement {
         keyMap[keyCode] = true;
 
         // Handle Player 2 animations (WASD keys)
-        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0] && Bumpers[1].gltfStore.action[5]) {
-          if (keyCode == 'KeyA') {
-            this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 5, 0.1);
-          }
-          if (keyCode == 'KeyD') {
-            this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
-          }
+        if (keyCode == 'KeyA') {
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 5, 0.1);
+        }
+        if (keyCode == 'KeyD') {
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
         }
       }
       // Handle pause/resume with Escape key
       if (keyCode == 'Escape') {
         if (gameStateContainer.isPaused == false) {
           gameStartAndStop[1]();
-          let i = 0;
-          if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'pause']);
+          if (this.Workers) {
+            this.Workers.forEach((worker) => {
+              if (worker) {
+                worker.postMessage([-1, -1, 'pause']);
+              }
+            });
+          }
           clearTimeout(Timer.timeoutId);
           gameStateContainer.isPaused = true;
         } else {
-          let i = 0;
-          if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'resume']);
+          // Resume the game
+          if (this.Workers) {
+            this.Workers.forEach((worker) => {
+              if (worker) {
+                worker.postMessage([-1, -1, 'resume']);
+              }
+            });
+          }
           Timer.timeoutId = setTimeout(TimerCallBack, 1000);
           gameStateContainer.isPaused = false;
           gameStartAndStop[0]();
@@ -312,22 +454,18 @@ export class Game extends HTMLElement {
       const keyCode = e.code;
       keyMap[keyCode] = false;
       // Return Player 1 to idle animation when keys are released
-      if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[2]) {
-        if (keyCode == 'ArrowRight') {
-          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 2, 0.5);
-        }
-        if (keyCode == 'ArrowLeft') {
-          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 2, 0.5);
-        }
+      if (keyCode == 'ArrowRight') {
+        this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 2, 0.5);
+      }
+      if (keyCode == 'ArrowLeft') {
+        this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 2, 0.5);
       }
       // Return Player 2 to idle animation when keys are released
-      if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[2]) {
-        if (keyCode == 'KeyA') {
-          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
-        }
-        if (keyCode == 'KeyD') {
-          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
-        }
+      if (keyCode == 'KeyA') {
+        this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
+      }
+      if (keyCode == 'KeyD') {
+        this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
       }
       e.preventDefault();
     };
@@ -339,17 +477,24 @@ export class Game extends HTMLElement {
    */
   async initLoaders(renderer) {
     try {
+      GameLogger.info('LoaderInit', 'Initializing 3D model loaders...');
+
       // Set up KTX2 loader for compressed textures
       this.#ktx2Loader = new KTX2Loader().setTranscoderPath('/libs/basis/').detectSupport(renderer);
+      GameLogger.debug('LoaderInit', 'KTX2 loader configured');
 
       // Wait for MeshOpt decoder to be ready
       await MeshoptDecoder.ready;
+      GameLogger.debug('LoaderInit', 'MeshOpt decoder ready');
 
       // Configure GLTF loader with optimizations
       this.loaderModel = new GLTFLoader();
       this.loaderModel.setKTX2Loader(this.#ktx2Loader);
       this.loaderModel.setMeshoptDecoder(MeshoptDecoder);
+
+      GameLogger.info('LoaderInit', 'All 3D loaders initialized successfully');
     } catch (error) {
+      GameLogger.error('LoaderInit', 'Failed to initialize 3D loaders', error);
       throw new Error(`Failed to initialize 3D loaders: ${error.message}`);
     }
   }
@@ -463,7 +608,10 @@ export class Game extends HTMLElement {
           modelName,
           resolve,
           (progress) => {
-            log.info(`Loading ${modelName}:`, (progress.loaded / progress.total) * 100 + '%');
+            GameLogger.debug(
+              'ModelLoader',
+              `Loading ${modelName}: ${((progress.loaded / progress.total) * 100).toFixed(1)}%`,
+            );
           },
           reject,
         );
@@ -489,9 +637,10 @@ export class Game extends HTMLElement {
       model.scale.set(scaleX, scaleY, scaleZ);
       modelGenerated.add(model);
 
+      GameLogger.info('ModelLoader', `Successfully loaded model: ${modelName}`);
       return modelGenerated;
     } catch (error) {
-      log.error(`Failed to load model ${modelName}, using fallback:`, error.message);
+      GameLogger.warn('ModelLoader', `Failed to load model ${modelName}, using fallback`, error);
       return this.createFallbackModel(posX, posY, posZ, scaleX, scaleY, scaleZ);
     }
   }
@@ -524,10 +673,103 @@ export class Game extends HTMLElement {
   }
 
   /**
+   * Load texture with fallback protection
+   * @param {string} texturePath - Path to the texture file
+   * @param {number} fallbackColor - Fallback color as hex (default: brown for ground)
+   * @returns {THREE.Texture|THREE.MeshPhongMaterial} Loaded texture or fallback material
+   */
+  async createTextureLoader(texturePath, fallbackColor) {
+    try {
+      // Load texture with progress tracking
+      const texture = await new Promise((resolve, reject) => {
+        const loader = new THREE.TextureLoader();
+        loader.load(
+          texturePath,
+          resolve,
+          (progress) => {
+            GameLogger.debug(
+              'TextureLoader',
+              `Loading ${texturePath}: ${((progress.loaded / progress.total) * 100).toFixed(1)}%`,
+            );
+          },
+          reject,
+        );
+      });
+
+      // Validate loaded texture
+      if (!texture) {
+        throw new Error(`Invalid texture file: ${texturePath}`);
+      }
+
+      // Configure texture settings
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(100, 100); // Tile the texture
+
+      GameLogger.info('TextureLoader', `Successfully loaded texture: ${texturePath}`);
+      return texture;
+    } catch (error) {
+      GameLogger.warn('TextureLoader', `Failed to load texture ${texturePath}, using fallback color`, error);
+      return this.createFallbackTexture(fallbackColor);
+    }
+  }
+
+  /**
+   * Create a fallback texture when texture loading fails
+   * @param {number} fallbackColor - Fallback color as hex
+   * @returns {THREE.MeshPhongMaterial} Solid color material
+   */
+  createFallbackTexture(fallbackColor) {
+    GameLogger.warn('TextureLoader', `Creating fallback texture with color: #${fallbackColor.toString(16)}`);
+    return new THREE.MeshPhongMaterial({ color: fallbackColor });
+  }
+
+  /**
+   * Create a fallback player model when pedro model fails to load
+   * @param {number} posX - X position for the player
+   * @param {number} posZ - Z position for the player
+   * @returns {THREE.Object3D} Simple geometric player representation
+   */
+  createFallbackPlayerModel(posX, posZ) {
+    GameLogger.warn('PlayerModel', 'Creating fallback player model');
+
+    // Create a capsule-like player representation
+    const playerModel = new THREE.Object3D();
+
+    // Body (cylinder)
+    const bodyGeometry = new THREE.CylinderGeometry(1, 1, 8, 8);
+    const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0x4a4a4a });
+    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    body.position.set(0, 0.75, 0);
+    body.castShadow = true;
+    body.receiveShadow = true;
+
+    // Assemble the player model
+    playerModel.add(body);
+
+    // Apply scaling and positioning
+    playerModel.scale.set(0.5, 0.5, 0.5);
+    playerModel.position.set(posX, 0, posZ);
+
+    // Set rotation based on position (same logic as pedro model)
+    if (posZ < 0) {
+      playerModel.rotation.y = this.degreesToRadians(55);
+      playerModel.position.z = posZ - 1;
+      playerModel.position.x += 1;
+    } else {
+      playerModel.rotation.y = this.degreesToRadians(235);
+      playerModel.position.z = posZ + 1;
+      playerModel.position.x -= 1;
+    }
+
+    return playerModel;
+  }
+
+  /**
    * Hide all game UI elements (used during errors or game end)
    */
   hideGameUI() {
-    log.info('Hiding game UI');
+    GameLogger.info('UI', 'Hiding game UI');
 
     const elements = [
       { element: this.scoreElement, name: 'scoreElement' },
@@ -539,7 +781,7 @@ export class Game extends HTMLElement {
     elements.forEach(({ element, name }) => {
       if (element) {
         element.style.display = 'none';
-        log.info(`Hidden ${name}`);
+        GameLogger.debug('UI', `Hidden ${name}`);
       }
     });
   }
@@ -548,7 +790,7 @@ export class Game extends HTMLElement {
    * Show all game UI elements
    */
   showGameUI() {
-    log.info('Showing game UI');
+    GameLogger.info('UI', 'Showing game UI');
 
     const elements = [
       { element: this.scoreElement, name: 'scoreElement' },
@@ -560,7 +802,7 @@ export class Game extends HTMLElement {
     elements.forEach(({ element, name }) => {
       if (element) {
         element.style.display = '';
-        log.info(`Shown ${name}`);
+        GameLogger.debug('UI', `Shown ${name}`);
       }
     });
   }
@@ -579,6 +821,9 @@ export class Game extends HTMLElement {
     // Game boundaries and collision detection
     const BUMPER_1_BORDER = -10; // Player 1 goal line
     const BUMPER_2_BORDER = -BUMPER_1_BORDER; // Player 2 goal line
+    const BUMPER_LENGTH_HALF = 2.5; // Half bumper length
+    const BUMPER_WIDTH_HALF = 0.5; // Half bumper width
+    const BUMPER_SPEED = 0.25;
 
     const WALL_LEFT_X = 10; // Left wall position
     const WALL_RIGHT_X = -WALL_LEFT_X; // Right wall position
@@ -597,6 +842,7 @@ export class Game extends HTMLElement {
     // Game configuration from options
     const GAME_TIME = gameOptionsQuery.time_limit;
     const MAX_SCORE = gameOptionsQuery.score_to_win;
+    const overlayUI = this.overlay;
 
     // Set game speed multiplier based on user preference
     let GAME_SPEED;
@@ -617,8 +863,11 @@ export class Game extends HTMLElement {
 
     const degreesToRadians = this.degreesToRadians;
     const pi = Math.PI;
-    let keyMap = []; // Tracks which keys are currently pressed
-    const overlayUI = this.overlay;
+
+    // Input handling
+    const keyMap = []; // Tracks which keys are currently pressed
+
+    // Game state management with getter/setter pattern
 
     const gameStateContainer = (() => {
       let isPaused = false;
@@ -700,6 +949,45 @@ export class Game extends HTMLElement {
     scene.add(ambientLight);
     scene.add(fillLight);
 
+    // Create ground plane with protected texture loading
+    const createGroundPlane = async () => {
+      // Load ground texture with fallback protection
+      const groundMaterial = await this.createTextureLoader(groundtexture, 0xaf7a43); // Brown fallback color
+
+      // Create ground geometry
+      const groundGeometry = new THREE.PlaneGeometry(2000, 2000);
+
+      // Create ground mesh with either texture or fallback material
+      let ground;
+      if (groundMaterial.isTexture) {
+        // If texture loaded successfully, create material with texture
+        const material = new THREE.MeshPhongMaterial({
+          map: groundMaterial,
+          color: 0xd4a574, // Desert sand color
+          depthWrite: true,
+        });
+        ground = new THREE.Mesh(groundGeometry, material);
+      } else {
+        // If fallback material, use it directly
+        ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      }
+
+      // Configure ground properties
+      ground.rotateX(-pi / 2); // Rotate to be horizontal
+      ground.receiveShadow = true; // Allow shadows to be cast on ground
+
+      scene.add(ground);
+      // Register ground for frustum culling
+      if (this.renderOptimizer) {
+        this.renderOptimizer.registerStatic(ground, 'ground');
+      }
+      GameLogger.info('Ground', 'Ground plane created successfully');
+      return ground;
+    };
+
+    // Create the ground plane
+    await createGroundPlane();
+
     // Helper function for model creation and scene addition
     const modelCreate = async (posX, posY, posZ, scaleX, scaleY, scaleZ, modelName) => {
       const modelGenerated = await this.createModelLoader(modelName, posX, posY, posZ, scaleX, scaleY, scaleZ);
@@ -707,20 +995,50 @@ export class Game extends HTMLElement {
       return modelGenerated;
     };
 
+    const safeModelSwitch = (targetPlayer, newModelIndex) => {
+      if (targetPlayer.modelChoosen == newModelIndex) return;
+
+      if (!targetPlayer.modelsGlb || newModelIndex >= targetPlayer.modelsGlb.length) {
+        GameLogger.warn(
+          'ModelSwitch',
+          `Model index ${newModelIndex} out of bounds (array length: ${targetPlayer.modelsGlb?.length}), falling back to index 0`,
+        );
+        newModelIndex = 0; // Fallback to table model
+      }
+
+      // Hide current model
+      if (targetPlayer.modelsGlb[targetPlayer.modelChoosen]) {
+        targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = false;
+      }
+
+      // Switch to new model
+      targetPlayer.modelChoosen = newModelIndex;
+
+      // Show new model
+      if (targetPlayer.modelsGlb[targetPlayer.modelChoosen]) {
+        targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = true;
+      }
+    };
+
     // Environment setup - Background elements
 
     // Cardboard signs that change based on score progression
-    let carboardModels = [];
-    const carboardModelStates = [carboard, carboard2, carboard3];
+    const cardboardModels = [];
+    const cardboardModelStates = [cardboard, cardboard2, cardboard3];
 
     for (let i = 0; i <= 2; i++) {
-      const carboardGlb = await modelCreate(-15, 0, 0, 1.6, 1.6, 2.2, carboardModelStates[i]);
-      carboardGlb.rotateY(pi / 2);
-      carboardModels[i] = carboardGlb;
+      const cardboardGlb = await modelCreate(-15, 0, 0, 1.6, 1.6, 2.2, cardboardModelStates[i]);
+      cardboardGlb.rotateY(pi / 2);
+      cardboardModels[i] = cardboardGlb;
     }
     // Initially show only the first cardboard sign
-    carboardModels[1].visible = false;
-    carboardModels[2].visible = false;
+    cardboardModels[1].visible = false;
+    cardboardModels[2].visible = false;
+    if (this.renderOptimizer) {
+      this.renderOptimizer.registerStatic(cardboardModels[0], 'cardboard0');
+      this.renderOptimizer.registerStatic(cardboardModels[1], 'cardboard1');
+      this.renderOptimizer.registerStatic(cardboardModels[2], 'cardboard2');
+    }
 
     // Desert environment - Cactus placement system
     const cacti = [];
@@ -728,12 +1046,11 @@ export class Game extends HTMLElement {
     const minDistance = 8; // Minimum distance between cacti
 
     // Factory function for creating randomly rotated cacti
+    // Factory function for creating randomly rotated cacti with error handling
     const CactusFactory = async (posX, posY, posZ) => {
       const cactusGlb = await modelCreate(posZ, posY, posX, 1.8, 1.8, 1.8, cactus);
       cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
-      return {
-        cactusGlb,
-      };
+      return { cactusGlb };
     };
 
     // Generate safe positions for cacti (avoiding play area and other cacti)
@@ -748,7 +1065,7 @@ export class Game extends HTMLElement {
         if (attempts > 50) break; // Prevent infinite loops
       } while (
         // Avoid the playing field area
-        (x > -13.65 && x < 13.65 && z > -15 && z < 15) ||
+        (x > -13.65 && x < 13.65 && z > -16 && z < 16) ||
         // Maintain minimum distance from other cacti
         placedCacti.some((cactus) => Math.sqrt((x - cactus.x) ** 2 + (z - cactus.z) ** 2) < minDistance)
       );
@@ -763,29 +1080,41 @@ export class Game extends HTMLElement {
       cactusPromises.push(CactusFactory(pos.x, 0, pos.z));
     }
 
+    // Initialize performance optimization systems early
+    this.initSharedMaterials();
+    this.initRenderOptimizations(camera, scene);
+
     // Load all cacti in parallel for better performance
     const loadedCacti = await Promise.all(cactusPromises);
     loadedCacti.forEach((cactus, index) => {
       cacti[index] = cactus;
+      // Register cacti for frustum culling
+      if (this.renderOptimizer && cactus.cactusGlb) {
+        this.renderOptimizer.registerStatic(cactus.cactusGlb, 'cactus');
+      }
     });
 
-    // Create layered hills for background depth
+    // Create layered hills for background depth with shared materials
     const createHill = (posX, posZ, width, height) => {
-      // Create hill base (wider, shorter)
+      // Create hill base (wider, shorter) using shared material
       const baseGeometry = new THREE.CylinderGeometry(width * 1.5, width * 2, height * 0.3, 8);
-      const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x3a251a });
-      const base = new THREE.Mesh(baseGeometry, baseMaterial);
+      const base = new THREE.Mesh(baseGeometry, this.sharedMaterials.hillMaterial);
       base.position.set(posX, -height * 0.1, posZ);
       base.receiveShadow = true;
       scene.add(base);
 
-      // Create hill top (narrower, taller)
+      // Create hill top (narrower, taller) using shared material
       const hillGeometry = new THREE.CylinderGeometry(width * 0.8, width, height, 8);
-      const hillMaterial = new THREE.MeshPhongMaterial({ color: 0x3a251a });
-      const hill = new THREE.Mesh(hillGeometry, hillMaterial);
+      const hill = new THREE.Mesh(hillGeometry, this.sharedMaterials.hillMaterial);
       hill.position.set(posX, height * 0.3, posZ);
       hill.receiveShadow = true;
       scene.add(hill);
+
+      // Register static objects for frustum culling
+      if (this.renderOptimizer) {
+        this.renderOptimizer.registerStatic(base, 'hill_base');
+        this.renderOptimizer.registerStatic(hill, 'hill_top');
+      }
 
       return hill;
     };
@@ -801,6 +1130,9 @@ export class Game extends HTMLElement {
     const WallFactory = async (posX, posY, posZ) => {
       const fenceGlb = await modelCreate(posX, posY, posZ, 0.8, 0.5, 1, fence);
       fenceGlb.rotateY(-pi / 2); // Rotate to face inward
+      if (this.renderOptimizer && fenceGlb) {
+        this.renderOptimizer.registerStatic(fenceGlb, 'wall');
+      }
       return {
         fenceGlb,
       };
@@ -815,35 +1147,13 @@ export class Game extends HTMLElement {
       WallFactory(0, 1.3, -9.65), // Bottom center
     ]);
 
-    // Create textured ground plane
-    (() => {
-      const textureLoader = new THREE.TextureLoader();
-      const groundTexture = textureLoader.load(groundtexture);
-      // Set texture to repeat for large ground area
-      groundTexture.wrapS = THREE.RepeatWrapping;
-      groundTexture.wrapT = THREE.RepeatWrapping;
-      groundTexture.repeat.set(100, 100);
-
-      const phongMaterial = new THREE.MeshPhongMaterial({
-        map: groundTexture,
-        color: 0xd4a574, // Desert sand color
-        depthWrite: true,
-      });
-
-      // Large ground plane to fill the visible area
-      const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
-      const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
-      planeMesh.rotateX(-pi / 2); // Rotate to be horizontal
-      planeMesh.receiveShadow = true;
-      scene.add(planeMesh);
-    })();
-
     // MOVING OBJECTS AND GAME ENTITIES
 
     // Ball creation
     const Ball = await (async (posX, posY, posZ) => {
       const bulletGlb = await modelCreate(posX, posY, posZ, 1, 1, 1, bullet);
       bulletGlb.rotateX(pi / 2);
+
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
       const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * GAME_SPEED);
@@ -860,8 +1170,6 @@ export class Game extends HTMLElement {
     const BumperFactory = async (posX, posY, posZ) => {
       let _ = {};
       let modelsGlb;
-      let animations = [];
-      _.action = [null, null, null, null, null, null, null, null];
 
       const tableGlb = await modelCreate(0.04, 0.45, 0, 0.48, 0.5, 0.5, table);
       if (gameOptionsQuery.cool_mode == true) {
@@ -883,52 +1191,16 @@ export class Game extends HTMLElement {
         modelsGlb = [tableGlb, couchGlb, chairGlb, dressingGlb];
       } else modelsGlb = [tableGlb];
 
-      // Create player model with animation
-      const playerGlb = (() => {
-        const pedroModel = new THREE.Object3D();
-        this.loaderModel.load(
-          pedro,
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = 0;
-            model.position.x = posX;
-            _.mixer = new THREE.AnimationMixer(model);
-            animations = gltf.animations;
-            for (let i = 0; i <= 7; i++) {
-              _.action[i] = _.mixer.clipAction(animations[i], model);
-            }
-            _.action[1].setLoop(THREE.LoopOnce, 1);
-            _.action[1].setDuration(0.4);
-            _.action[0].setDuration(0.18);
-            _.action[7].setDuration(0.18);
-            _.action[6].setDuration(0.18);
-            _.action[5].setDuration(0.18);
-            _.action[2].play();
-            pedroModel.add(gltf.scene);
-          },
-          undefined,
-          function (error) {
-            log.error(error);
-          },
-        );
-        pedroModel.scale.set(0.5, 0.5, 0.5);
-        scene.add(pedroModel);
-        return pedroModel;
-      })();
+      // Create player model with robust loading and fallback protection
+      const playerModelData = await this.loadPedroModelWithFallback(posX, posZ, scene);
+      const playerGlb = playerModelData.playerGlb;
+
+      // Update gltfStore with loaded data
+      _ = playerModelData.gltfStore;
+
+      // Apply table rotation based on player position
       if (posZ < 0) {
-        playerGlb.rotation.y = degreesToRadians(55);
-        playerGlb.position.z = posZ - 1;
-        playerGlb.position.x += 1;
-        tableGlb.rotation.z = Math.PI;
-      } else {
-        playerGlb.rotation.y = degreesToRadians(235);
-        playerGlb.position.z = posZ + 1;
-        playerGlb.position.x -= 1;
+        tableGlb.rotation.z = pi;
       }
 
       modelsGlb.forEach((element) => {
@@ -944,13 +1216,13 @@ export class Game extends HTMLElement {
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dirZ = -Math.sign(posZ);
-      let lenghtHalf = 2.5;
+      let lengthHalf = BUMPER_LENGTH_HALF;
       let modelChoosen = 0;
-      let widthHalf = 0.5;
+      let widthHalf = BUMPER_WIDTH_HALF;
       let controlReverse = false;
-      let speed = 0.25 * GAME_SPEED;
+      let speed = BUMPER_SPEED * GAME_SPEED;
       let score = 0;
-      let currentAction = 2;
+      let currentAction = playerModelData.currentAction;
 
       return {
         modelsGlb,
@@ -989,11 +1261,11 @@ export class Game extends HTMLElement {
         set controlReverse(newControlReverse) {
           controlReverse = newControlReverse;
         },
-        get lenghtHalf() {
-          return lenghtHalf;
+        get lengthHalf() {
+          return lengthHalf;
         },
-        set lenghtHalf(newLenghtHalf) {
-          lenghtHalf = newLenghtHalf;
+        set lengthHalf(newLengthHalf) {
+          lengthHalf = newLengthHalf;
         },
         get widthHalf() {
           return widthHalf;
@@ -1009,12 +1281,46 @@ export class Game extends HTMLElement {
 
     const Bumpers = await Promise.all([BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)]);
 
+    // Register dynamic objects for optimized rendering
+    if (this.renderOptimizer) {
+      // Register ball as dynamic object
+      this.renderOptimizer.registerDynamic(Ball.bulletGlb, 'ball');
+
+      // Register player models as dynamic objects
+      if (Bumpers[0].playerGlb) {
+        this.renderOptimizer.registerDynamic(Bumpers[0].playerGlb, 'player1');
+      }
+      if (Bumpers[1].playerGlb) {
+        this.renderOptimizer.registerDynamic(Bumpers[1].playerGlb, 'player2');
+      }
+
+      // Register player furniture as static (they don't move much)
+      Bumpers.forEach((bumper, index) => {
+        bumper.modelsGlb.forEach((model, modelIndex) => {
+          this.renderOptimizer.registerDynamic(model, `furniture_p${index}_${modelIndex}`);
+        });
+      });
+
+      GameLogger.info(
+        'RenderOptimizer',
+        `Registered ${this.renderOptimizer.getStats().totalObjects} objects for culling`,
+      );
+    }
+
     // Collisions checks
 
     let ballSubtickZ;
     let ballSubtickX;
     let lastBumperCollided = 0;
 
+    /**
+     * Collision detection between ball and power-up coin
+     * Uses AABB (Axis-Aligned Bounding Box) collision detection
+     * @param {Object} coin - The coin object with position data
+     * @param {number} ballSubtickZ - Ball's Z-axis movement in this subtick
+     * @param {number} ballSubtickX - Ball's X-axis movement in this subtick
+     * @returns {boolean} True if collision detected
+     */
     function isCoinCollidedWithBall(coin, ballSubtickZ, ballSubtickX) {
       return (
         Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= coin.cylinderUpdate.x + 0.25 &&
@@ -1024,19 +1330,27 @@ export class Game extends HTMLElement {
       );
     }
 
+    /**
+     * Advanced collision detection between ball and player bumper
+     * Accounts for ball movement prediction and dynamic bumper sizing
+     * @param {Object} bumper - Player bumper object with position and size data
+     * @param {number} ballSubtickZ - Ball's predicted Z movement
+     * @param {number} ballSubtickX - Ball's predicted X movement
+     * @returns {boolean} True if collision will occur
+     */
     function isCollidedWithBall(bumper, ballSubtickZ, ballSubtickX) {
       return (
-        Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= bumper.cubeUpdate.x + bumper.lenghtHalf &&
-        Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= bumper.cubeUpdate.x - bumper.lenghtHalf &&
+        Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= bumper.cubeUpdate.x + bumper.lengthHalf &&
+        Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= bumper.cubeUpdate.x - bumper.lengthHalf &&
         Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf &&
         Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf
       );
     }
 
     function calculateNewDir(bumper) {
-      let collisionPosX = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
-      let normalizedCollisionPosX = collisionPosX / (BALL_RADIUS + bumper.lenghtHalf);
-      let bounceAngleRadians = degreesToRadians(55 * normalizedCollisionPosX);
+      const collisionPosX = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
+      const normalizedCollisionPosX = collisionPosX / (BALL_RADIUS + bumper.lengthHalf);
+      const bounceAngleRadians = degreesToRadians(55 * normalizedCollisionPosX);
       Ball.velocity.z = Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dirZ;
       Ball.velocity.x = Ball.velocity.z * -Math.tan(bounceAngleRadians) * bumper.dirZ;
       if (
@@ -1098,7 +1412,9 @@ export class Game extends HTMLElement {
       if (this.#state.gameType === 'ai') {
         winner.name = winner.number === 1 ? 'You' : 'AI Player';
         loser.name = loser.number === 1 ? 'You' : 'AI Player';
-        winner.number === 1 ? (winner.avatar = this.#state.user.avatar) : (loser.avatar = this.#state.user.avatar);
+        if (this.#state.user && this.#state.user.avatar) {
+          winner.number === 1 ? (winner.avatar = this.#state.user.avatar) : (loser.avatar = this.#state.user.avatar);
+        }
       }
       const resultData = {
         winner: winner,
@@ -1108,7 +1424,7 @@ export class Game extends HTMLElement {
       overlayUI.show(OVERLAY_TYPE.GAMEOVER, resultData);
     };
 
-    let scoreSwitch = MAX_SCORE / 3;
+    const scoreSwitch = MAX_SCORE / 3;
 
     const resetBall = (direction) => {
       const looserBumper = direction < 0 ? 1 : 0;
@@ -1120,11 +1436,11 @@ export class Game extends HTMLElement {
         gameLoop.stop();
         return;
       } else if (Bumpers[0].score < scoreSwitch * 2 && Bumpers[0].score >= scoreSwitch) {
-        carboardModels[0].visible = false;
-        carboardModels[1].visible = true;
+        cardboardModels[0].visible = false;
+        cardboardModels[1].visible = true;
       } else if (Bumpers[0].score < scoreSwitch * 3 && Bumpers[0].score >= scoreSwitch * 2) {
-        carboardModels[1].visible = false;
-        carboardModels[2].visible = true;
+        cardboardModels[1].visible = false;
+        cardboardModels[2].visible = true;
       }
       Ball.temporalSpeed.x = 1;
       Ball.temporalSpeed.z = 1;
@@ -1163,7 +1479,7 @@ export class Game extends HTMLElement {
       [1, 1000],
     ];
 
-    // Handling Ai
+    // Handling AI
     const moveAiBumper = (calculatedPos) => {
       keyMap['KeyA'] = false;
       keyMap['KeyD'] = false;
@@ -1172,20 +1488,13 @@ export class Game extends HTMLElement {
         keyMap['KeyA'] = true;
         calculatedBumperPos.x += bumperP2Subtick;
 
-        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0]) {
-          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
-        }
+        this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
       } else if (calculatedBumperPos.x > calculatedPos.x + 0.1 && calculatedBumperPos.x > calculatedPos.x + 0.2) {
         keyMap['KeyD'] = true;
         calculatedBumperPos.x -= bumperP2Subtick;
-
-        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[6]) {
-          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 6, 0.1);
-        }
+        this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 6, 0.1);
       } else {
-        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0] && Bumpers[1].gltfStore.action[6]) {
-          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
-        }
+        this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
       }
     };
 
@@ -1208,7 +1517,7 @@ export class Game extends HTMLElement {
     }
 
     function calculateErrorMargin(BallPosZ) {
-      const errorScale = 2.5 / Bumpers[1].lenghtHalf;
+      const errorScale = 2.5 / Bumpers[1].lengthHalf;
       const closenessToBall = (BallPosZ - calculatedBumperPos.z) / 18;
       const errorMargin = difficultyLvl[choosenDifficulty][0] * closenessToBall * errorScale;
       return errorMargin;
@@ -1243,19 +1552,17 @@ export class Game extends HTMLElement {
           ballPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
         }
 
-        if (Bumpers[1].lenghtHalf < 2.0) {
+        if (Bumpers[1].lengthHalf < 2.0 || Bumpers[1].speed != BUMPER_SPEED) {
           ballPredictedPos.x += (Math.random() - 0.5) * errorMargin * 0.6;
-        } else if (Bumpers[1].lenghtHalf > 3.0) {
-          ballPredictedPos.x += -errorMargin + Math.round(Math.random()) * (errorMargin * 2);
         } else {
           ballPredictedPos.x += -errorMargin + Math.round(Math.random()) * (errorMargin * 2);
         }
 
         isCalculationNeeded = false;
-        const timeooutId = setTimeout(() => {
+        const timeoutId = setTimeout(() => {
           if (BallVelocity.z > 0) {
             isCalculationNeeded = true;
-            clearTimeout(timeooutId);
+            clearTimeout(timeoutId);
           }
         }, difficultyLvl[choosenDifficulty][1]);
       }
@@ -1267,7 +1574,7 @@ export class Game extends HTMLElement {
     }
 
     // Timer related
-    let Timer = (() => {
+    const Timer = (() => {
       let timeLeft = !GAME_TIME ? 180 : GAME_TIME * 60;
       let timeoutId = setTimeout(TimerCallBack, 1000);
       return {
@@ -1335,99 +1642,63 @@ export class Game extends HTMLElement {
       this.#blobURL = URL.createObjectURL(blob);
 
       // Buff timer workers
-      Workers = Array.from({ length: 6 }, () => new Worker(this.#blobURL));
+      Workers = Array.from({ length: 2 }, () => new Worker(this.#blobURL));
       Workers[0].onmessage = function (e) {
-        const bumperAffected = e.data[0];
-        let dirZ = Bumpers[bumperAffected].playerGlb.position.z;
-        if (dirZ < 0) {
-          Bumpers[bumperAffected].playerGlb.position.x += 7.2;
-          Bumpers[bumperAffected].playerGlb.position.z -= 0.7;
-        } else {
-          Bumpers[bumperAffected].playerGlb.position.x -= 7.2;
-          Bumpers[bumperAffected].playerGlb.position.z += 0.7;
-        }
-        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = false;
-        Bumpers[bumperAffected].modelChoosen = 0;
-        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
-        Bumpers[bumperAffected].lenghtHalf = 2.5;
-        buffUI?.hide();
-      };
-      Workers[1].onmessage = function (e) {
-        const bumperAffected = Math.abs(e.data[0] - 1);
-        let dirZ = Bumpers[bumperAffected].playerGlb.position.z;
-        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = false;
-        Bumpers[bumperAffected].modelChoosen = 0;
-        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
-        Bumpers[bumperAffected].lenghtHalf = 2.5;
-        if (
-          Bumpers[bumperAffected].cubeUpdate.x <
-          WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf
-        ) {
-          Bumpers[bumperAffected].cubeUpdate.x =
-            WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf - 0.1;
-          Bumpers[bumperAffected].playerGlb.position.x =
-            WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf - 0.1;
-        } else if (
-          Bumpers[bumperAffected].cubeUpdate.x >
-          WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf
-        ) {
-          Bumpers[bumperAffected].cubeUpdate.x =
-            WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf + 0.1;
-          Bumpers[bumperAffected].playerGlb.position.x =
-            WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf + 0.1;
-        }
-        if (dirZ < 0) {
-          Bumpers[bumperAffected].playerGlb.position.x += 1;
-          Bumpers[bumperAffected].playerGlb.position.z -= 0.4;
-        } else {
-          Bumpers[bumperAffected].playerGlb.position.x -= 1;
-          Bumpers[bumperAffected].playerGlb.position.z += 0.4;
+        for (let i = 0; i < Bumpers.length; i++) {
+          const bumper = Bumpers[i];
+
+          // Reset control and speed effects
+          bumper.controlReverse = false;
+          bumper.speed = BUMPER_SPEED * GAME_SPEED;
+
+          // Reset size effects
+          bumper.lengthHalf = BUMPER_LENGTH_HALF;
+          bumper.widthHalf = BUMPER_WIDTH_HALF;
+          if (bumper.cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lengthHalf) {
+            bumper.cubeUpdate.x = WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lengthHalf - 0.1;
+            bumper.playerGlb.position.x = WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lengthHalf - 0.1;
+          } else if (bumper.cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lengthHalf) {
+            bumper.cubeUpdate.x = WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lengthHalf + 0.1;
+            bumper.playerGlb.position.x = WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lengthHalf + 0.1;
+          }
+
+          // Reset model back to table (index 0) with safe switching
+          safeModelSwitch(bumper, 0);
+
+          // Reset position if it was modified by buffs
+          if (bumper.playerGlb && bumper.cubeUpdate) {
+            if (bumper.dirZ < 0) {
+              bumper.playerGlb.position.z = bumper.cubeUpdate.z + 1;
+              bumper.playerGlb.position.x = bumper.cubeUpdate.x - 1;
+            } else {
+              bumper.playerGlb.position.z = bumper.cubeUpdate.z - 1;
+              bumper.playerGlb.position.x = bumper.cubeUpdate.x + 1;
+            }
+          }
         }
         buffUI?.hide();
       };
-      Workers[2].onmessage = function (e) {
-        Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
-        buffUI?.hide();
-      };
-      Workers[3].onmessage = function (e) {
-        const bumperAffected = Math.abs(e.data[0] - 1);
-        Bumpers[bumperAffected].speed = 0.25 * GAME_SPEED;
-        Bumpers[bumperAffected].gltfStore.action[0].setDuration(0.18);
-        Bumpers[bumperAffected].gltfStore.action[5].setDuration(0.18);
-        buffUI?.hide();
-      };
-      Workers[4].onmessage = function (e) {
-        const bumperAffected = e.data[0];
-        let dirZ = Bumpers[bumperAffected].playerGlb.position.z;
-        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = false;
-        Bumpers[bumperAffected].modelChoosen = 0;
-        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
-        Bumpers[bumperAffected].widthHalf = 0.5;
-        dirZ < 0
-          ? (Bumpers[bumperAffected].playerGlb.position.x += 5)
-          : (Bumpers[bumperAffected].playerGlb.position.x -= 5);
-        buffUI?.hide();
-      };
-      Workers[5].onmessage = function () {
+      Workers[1].onmessage = function () {
         Coin.cylinderUpdate.set(-9.25, 3, 0);
       };
 
       // Create coin
       Coin = await (async (posX, posY, posZ) => {
         const CoinGlb = await modelCreate(0, 0, 0, 0.45, 0.45, 0.45, coin);
-        CoinGlb.position.x = posX;
-        CoinGlb.position.y = posY;
-        CoinGlb.position.z = posZ;
+        CoinGlb.position.set(posX, posY, posZ);
+
         const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
         const velocity = new THREE.Vector3(0.01 * GAME_SPEED, 0, 0);
-        let lenghtHalf = 0.25;
-
+        let lengthHalf = 0.25;
+        if (this.renderOptimizer) {
+          this.renderOptimizer.registerDynamic(CoinGlb, 'coin');
+        }
         return {
-          get lenghtHalf() {
-            return lenghtHalf;
+          get lengthHalf() {
+            return lengthHalf;
           },
-          set lenghtHalf(newLenghtHalf) {
-            lenghtHalf = newLenghtHalf;
+          set lengthHalf(newLengthHalf) {
+            lengthHalf = newLengthHalf;
           },
           CoinGlb,
           cylinderUpdate,
@@ -1438,55 +1709,39 @@ export class Game extends HTMLElement {
 
     // Buff management
     const manageBuffAndDebuff = () => {
-      let chooseBuff = Math.floor(Math.random() * 5);
-      let dirZ = Bumpers[lastBumperCollided].playerGlb.position.z;
+      const chooseBuff = Math.floor(Math.random() * 5);
+      const dirZ = Bumpers[lastBumperCollided].playerGlb.position.z;
       const reversedLastBumperCollided = Math.abs(lastBumperCollided - 1);
       switch (chooseBuff) {
         case 1:
-          Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
-          Bumpers[lastBumperCollided].modelChoosen = 1;
-          Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = true;
-          Bumpers[lastBumperCollided].lenghtHalf = 5;
+          safeModelSwitch(Bumpers[lastBumperCollided], 1);
+          Bumpers[lastBumperCollided].lengthHalf = 5;
           if (
             Bumpers[lastBumperCollided].cubeUpdate.x <
-            WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf
+            WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lengthHalf
           ) {
             Bumpers[lastBumperCollided].cubeUpdate.x =
-              WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
-            dirZ < 0
-              ? (Bumpers[lastBumperCollided].playerGlb.position.x =
-                  WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 + 1)
-              : (Bumpers[lastBumperCollided].playerGlb.position.x =
-                  WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 - 1);
+              WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lengthHalf - 0.1;
           } else if (
             Bumpers[lastBumperCollided].cubeUpdate.x >
-            WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf
+            WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lengthHalf
           ) {
             Bumpers[lastBumperCollided].cubeUpdate.x =
-              WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
-            dirZ < 0
-              ? (Bumpers[lastBumperCollided].playerGlb.position.x =
-                  WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 + 1)
-              : (Bumpers[lastBumperCollided].playerGlb.position.x =
-                  WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 - 1);
+              WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lengthHalf + 0.1;
           }
           if (dirZ < 0) {
-            Bumpers[lastBumperCollided].playerGlb.position.x -= 7.2;
+            Bumpers[lastBumperCollided].playerGlb.position.x = Bumpers[lastBumperCollided].cubeUpdate.x + 1 - 7.2;
             Bumpers[lastBumperCollided].playerGlb.position.z += 0.7;
           } else {
-            Bumpers[lastBumperCollided].playerGlb.position.x += 7.2;
+            Bumpers[lastBumperCollided].playerGlb.position.x = Bumpers[lastBumperCollided].cubeUpdate.x - 1 + 7.2;
             Bumpers[lastBumperCollided].playerGlb.position.z -= 0.7;
           }
           Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.LONG);
           break;
         case 2:
-          Bumpers[reversedLastBumperCollided].modelsGlb[Bumpers[reversedLastBumperCollided].modelChoosen].visible =
-            false;
-          Bumpers[reversedLastBumperCollided].modelChoosen = 2;
-          Bumpers[reversedLastBumperCollided].modelsGlb[Bumpers[reversedLastBumperCollided].modelChoosen].visible =
-            true;
-          Bumpers[reversedLastBumperCollided].lenghtHalf = 1.25;
+          safeModelSwitch(Bumpers[reversedLastBumperCollided], 2);
+          Bumpers[reversedLastBumperCollided].lengthHalf = 1.25;
           if (dirZ < 0) {
             Bumpers[reversedLastBumperCollided].playerGlb.position.x += 1;
             Bumpers[reversedLastBumperCollided].playerGlb.position.z -= 0.4;
@@ -1494,35 +1749,33 @@ export class Game extends HTMLElement {
             Bumpers[reversedLastBumperCollided].playerGlb.position.x -= 1;
             Bumpers[reversedLastBumperCollided].playerGlb.position.z += 0.4;
           }
-          Workers[1].postMessage([10000, lastBumperCollided, 'create']);
+          Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.SHORT);
           break;
         case 3:
           Bumpers[reversedLastBumperCollided].controlReverse = true;
-          Workers[2].postMessage([2000, lastBumperCollided, 'create']);
+          Workers[0].postMessage([2000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.SWITCH);
           break;
         case 4:
           Bumpers[reversedLastBumperCollided].speed = 0.1 * GAME_SPEED;
           Bumpers[reversedLastBumperCollided].gltfStore.action[0].setDuration(0.2);
           Bumpers[reversedLastBumperCollided].gltfStore.action[5].setDuration(0.2);
-          Workers[3].postMessage([5000, lastBumperCollided, 'create']);
+          Workers[0].postMessage([5000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.SLOW);
           break;
         default:
-          Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
-          Bumpers[lastBumperCollided].modelChoosen = 3;
-          Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = true;
+          safeModelSwitch(Bumpers[lastBumperCollided], 3);
           Bumpers[lastBumperCollided].widthHalf = 1.5;
           dirZ < 0
             ? (Bumpers[lastBumperCollided].playerGlb.position.x -= 5)
             : (Bumpers[lastBumperCollided].playerGlb.position.x += 5);
-          Workers[4].postMessage([10000, lastBumperCollided, 'create']);
+          Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.LARGE);
           break;
       }
       Coin.cylinderUpdate.set(-100, 3, 0);
-      Workers[5].postMessage([30000, -1, 'create']);
+      Workers[1].postMessage([30000, -1, 'create']);
     };
 
     function checkBallScored() {
@@ -1549,7 +1802,7 @@ export class Game extends HTMLElement {
       if (
         ((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) ||
           (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) &&
-        !(Bumpers[0].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf)
+        !(Bumpers[0].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[0].lengthHalf)
       ) {
         Bumpers[0].cubeUpdate.x += bumperP1Subtick;
         Bumpers[0].playerGlb.position.x += bumperP1Subtick;
@@ -1557,7 +1810,7 @@ export class Game extends HTMLElement {
       if (
         ((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) ||
           (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) &&
-        !(Bumpers[0].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf)
+        !(Bumpers[0].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[0].lengthHalf)
       ) {
         Bumpers[0].cubeUpdate.x -= bumperP1Subtick;
         Bumpers[0].playerGlb.position.x -= bumperP1Subtick;
@@ -1566,7 +1819,7 @@ export class Game extends HTMLElement {
       if (
         ((keyMap['KeyD'] == true && Bumpers[1].controlReverse) ||
           (keyMap['KeyA'] == true && !Bumpers[1].controlReverse)) &&
-        !(Bumpers[1].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf)
+        !(Bumpers[1].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[1].lengthHalf)
       ) {
         Bumpers[1].cubeUpdate.x += bumperP2Subtick;
         Bumpers[1].playerGlb.position.x += bumperP2Subtick;
@@ -1574,7 +1827,7 @@ export class Game extends HTMLElement {
       if (
         ((keyMap['KeyA'] == true && Bumpers[1].controlReverse) ||
           (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) &&
-        !(Bumpers[1].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf)
+        !(Bumpers[1].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[1].lengthHalf)
       ) {
         Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
         Bumpers[1].playerGlb.position.x -= bumperP2Subtick;
@@ -1597,7 +1850,7 @@ export class Game extends HTMLElement {
 
     const clock = new THREE.Clock();
     let delta = 0;
-    let frameCache = {
+    const frameCache = {
       totalDistanceX: 0,
       totalDistanceZ: 0,
       totalSubticks: 0,
@@ -1657,13 +1910,28 @@ export class Game extends HTMLElement {
       // Update visual positions (once per frame)
       updateVisualPositions();
 
-      // Update animations
-      if (Bumpers[0].gltfStore?.mixer && Bumpers[1].gltfStore?.mixer) {
-        Bumpers[0].gltfStore.mixer.update(delta);
-        Bumpers[1].gltfStore.mixer.update(delta);
+      // Update animations with comprehensive safety checks (only if models moved)
+      try {
+        if (this.isAnimationSystemReady(Bumpers[0])) {
+          Bumpers[0].gltfStore.mixer.update(delta);
+        }
+        if (this.isAnimationSystemReady(Bumpers[1])) {
+          Bumpers[1].gltfStore.mixer.update(delta);
+        }
+      } catch (error) {
+        GameLogger.warn('Animation', 'Error updating animation mixers', error);
       }
 
-      renderer.render(scene, camera);
+      // Performance optimization: Update object visibility with frustum culling
+      if (this.renderOptimizer) {
+        this.renderOptimizer.updateVisibility(camera);
+      }
+
+      // Optimized render call - only render if game is actively playing
+      if (gameStateContainer.isGamePlaying) {
+        renderer.render(scene, camera);
+      }
+
       gameLoop.start();
     };
 
@@ -1674,8 +1942,8 @@ export class Game extends HTMLElement {
 
       // Check boundaries
       if (
-        coin.cylinderUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + coin.lenghtHalf ||
-        coin.cylinderUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - coin.lenghtHalf
+        coin.cylinderUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + coin.lengthHalf ||
+        coin.cylinderUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - coin.lengthHalf
       ) {
         coin.velocity.x *= -1;
       }
@@ -1700,11 +1968,10 @@ export class Game extends HTMLElement {
         Bumpers[1].cubeUpdate.z,
       );
     }
-    let gameStartAndStop = [gameLoop.start, gameLoop.stop];
+    const gameStartAndStop = [gameLoop.start, gameLoop.stop];
 
     this.onDocumentKeyDown = this.createOnDocumentKeyDown(
       keyMap,
-      Workers,
       gameStartAndStop,
       gameStateContainer,
       Timer,
@@ -1719,52 +1986,328 @@ export class Game extends HTMLElement {
   }
 
   disconnectedCallback() {
-    if (this.#animationId) {
-      cancelAnimationFrame(this.#animationId);
-      this.#animationId = null;
-    }
+    this.cleanup();
+  }
 
-    // Remove event listeners
-    if (this.onDocumentKeyDown) {
-      document.removeEventListener('keydown', this.onDocumentKeyDown, true);
-      this.onDocumentKeyDown = null;
-    }
-    if (this.onDocumentKeyUp) {
-      document.removeEventListener('keyup', this.onDocumentKeyUp, true);
-      this.onDocumentKeyUp = null;
-    }
-    if (this.#resizeHandler) {
-      window.removeEventListener('resize', this.#resizeHandler);
-      this.#resizeHandler = null;
-    }
+  /**
+   * Shared material system for memory optimization
+   * Reuses materials to reduce GPU memory usage
+   */
+  initSharedMaterials() {
+    this.sharedMaterials = {
+      // Common materials used throughout the scene
+      hillMaterial: new THREE.MeshPhongMaterial({ color: 0x3a251a }),
+      cactusBaseMaterial: new THREE.MeshPhongMaterial({ color: 0x228b22 }),
+      shadowMaterial: new THREE.ShadowMaterial({ opacity: 0.3 }),
 
-    // Clean up Workers and blob URL
-    if (this.Workers) {
-      this.Workers.forEach((worker) => {
-        if (worker) {
-          worker.terminate();
+      // Get or create shared material (optimized factory pattern)
+      get: (type, options = {}) => {
+        const key = `${type}_${JSON.stringify(options)}`;
+        if (!this.sharedMaterials[key]) {
+          const materialFactories = {
+            phong: () => new THREE.MeshPhongMaterial(options),
+            basic: () => new THREE.MeshBasicMaterial(options),
+            lambert: () => new THREE.MeshLambertMaterial(options),
+          };
+          this.sharedMaterials[key] = (materialFactories[type] || materialFactories.phong)();
         }
-      });
-      this.Workers = null;
-    }
-    if (this.#blobURL) {
-      URL.revokeObjectURL(this.#blobURL);
-      this.#blobURL = null;
+        return this.sharedMaterials[key];
+      },
+
+      // Dispose all shared materials
+      dispose: () => {
+        Object.values(this.sharedMaterials).forEach((material) => {
+          if (material && material.dispose) {
+            material.dispose();
+          }
+        });
+        this.sharedMaterials = null;
+      },
+    };
+
+    GameLogger.info('MaterialSystem', 'Shared material system initialized');
+  }
+
+  /**
+   * Performance optimization system for 3D rendering
+   * Manages object visibility and frustum culling
+   */
+  initRenderOptimizations(camera, scene) {
+    this.renderOptimizer = {
+      frustum: new THREE.Frustum(),
+      cameraMatrix: new THREE.Matrix4(),
+      staticObjects: [], // Objects that don't move (cacti, hills, walls)
+      dynamicObjects: [], // Objects that move (players, ball, coin)
+      lastCullCheck: 0,
+      cullInterval: 100, // Check visibility every 100ms instead of every frame
+
+      // Helper function to extract all meshes from an object
+      extractMeshes: (object) => {
+        const meshes = [];
+        object.traverse((child) => {
+          if (child.isMesh && child.geometry) {
+            meshes.push(child);
+          }
+        });
+        return meshes;
+      },
+
+      // Register static objects for culling
+      registerStatic: (object, type = 'static') => {
+        const meshes = this.renderOptimizer.extractMeshes(object);
+        meshes.forEach((mesh) => {
+          this.renderOptimizer.staticObjects.push({ object: mesh, type, lastVisible: true });
+        });
+      },
+
+      // Register dynamic objects for culling
+      registerDynamic: (object, type = 'dynamic') => {
+        const meshes = this.renderOptimizer.extractMeshes(object);
+        meshes.forEach((mesh) => {
+          this.renderOptimizer.dynamicObjects.push({ object: mesh, type, lastVisible: true });
+        });
+      },
+
+      // Perform frustum culling
+      updateVisibility: (camera, forceUpdate = false) => {
+        const now = performance.now();
+        if (!forceUpdate && now - this.renderOptimizer.lastCullCheck < this.renderOptimizer.cullInterval) {
+          return;
+        }
+
+        this.renderOptimizer.lastCullCheck = now;
+        this.renderOptimizer.cameraMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+        this.renderOptimizer.frustum.setFromProjectionMatrix(this.renderOptimizer.cameraMatrix);
+
+        // Cull static objects (less frequently)
+        this.renderOptimizer.staticObjects.forEach((item) => {
+          const wasVisible = item.lastVisible;
+
+          const isVisible = this.renderOptimizer.frustum.intersectsObject(item.object);
+
+          if (wasVisible !== isVisible) {
+            item.object.visible = isVisible;
+            item.lastVisible = isVisible;
+          }
+        });
+
+        // Always check dynamic objects (they move frequently)
+        this.renderOptimizer.dynamicObjects.forEach((item) => {
+          item.object.visible = this.renderOptimizer.frustum.intersectsObject(item.object);
+        });
+      },
+
+      // Get performance stats
+      getStats: () => {
+        const staticVisible = this.renderOptimizer.staticObjects.filter((item) => item.lastVisible).length;
+        const staticTotal = this.renderOptimizer.staticObjects.length;
+        const dynamicVisible = this.renderOptimizer.dynamicObjects.filter((item) => item.object.visible).length;
+        const dynamicTotal = this.renderOptimizer.dynamicObjects.length;
+
+        return {
+          staticVisible,
+          staticTotal,
+          dynamicVisible,
+          dynamicTotal,
+          totalVisible: staticVisible + dynamicVisible,
+          totalObjects: staticTotal + dynamicTotal,
+        };
+      },
+    };
+
+    GameLogger.info('RenderOptimizer', 'Frustum culling system initialized');
+  }
+
+  cleanup() {
+    GameLogger.info('Cleanup', 'Starting comprehensive cleanup...');
+
+    try {
+      // Cancel animation frame
+      if (this.#animationId) {
+        cancelAnimationFrame(this.#animationId);
+        this.#animationId = null;
+        GameLogger.debug('Cleanup', 'Animation frame cancelled');
+      }
+
+      // Remove event listeners
+      if (this.onDocumentKeyDown) {
+        document.removeEventListener('keydown', this.onDocumentKeyDown, true);
+        this.onDocumentKeyDown = null;
+        GameLogger.debug('Cleanup', 'Keydown listener removed');
+      }
+      if (this.onDocumentKeyUp) {
+        document.removeEventListener('keyup', this.onDocumentKeyUp, true);
+        this.onDocumentKeyUp = null;
+        GameLogger.debug('Cleanup', 'Keyup listener removed');
+      }
+      if (this.#resizeHandler) {
+        window.removeEventListener('resize', this.#resizeHandler);
+        this.#resizeHandler = null;
+        GameLogger.debug('Cleanup', 'Resize listener removed');
+      }
+
+      // Clean up UI elements
+      this.cleanupUIElements();
+    } catch (error) {
+      GameLogger.error('Cleanup', 'Error during initial cleanup phase', error);
     }
 
-    this.disposeThreeJS();
+    try {
+      // Clean up Workers and blob URL
+      if (this.Workers) {
+        this.Workers.forEach((worker) => {
+          if (worker) {
+            worker.terminate();
+          }
+        });
+        this.Workers = null;
+        GameLogger.debug('Cleanup', 'Workers terminated');
+      }
+      if (this.#blobURL) {
+        URL.revokeObjectURL(this.#blobURL);
+        this.#blobURL = null;
+        GameLogger.debug('Cleanup', 'Blob URL revoked');
+      }
 
-    if (this.#ktx2Loader) {
-      this.#ktx2Loader.dispose();
-      this.#ktx2Loader = null;
+      // Stop game loop first to prevent conflicts
+      if (this.stop) {
+        this.stop();
+        GameLogger.debug('Cleanup', 'Game loop stopped');
+      }
+
+      // Dispose Three.js objects properly
+      this.disposeThreeJS();
+
+      // Dispose shared materials
+      if (this.sharedMaterials) {
+        this.sharedMaterials.dispose();
+        GameLogger.debug('Cleanup', 'Shared materials disposed');
+      }
+
+      // Clean up loaders
+      if (this.#ktx2Loader) {
+        this.#ktx2Loader.dispose();
+        this.#ktx2Loader = null;
+        GameLogger.debug('Cleanup', 'KTX2 loader disposed');
+      }
+      if (this.loaderModel) {
+        this.loaderModel = null;
+        GameLogger.debug('Cleanup', 'Model loader cleared');
+      }
+
+      GameLogger.info('Cleanup', 'Single-player cleanup completed successfully');
+    } catch (error) {
+      GameLogger.error('Cleanup', 'Error during final cleanup phase', error);
     }
-    if (this.loaderModel) {
-      this.loaderModel = null;
+  }
+
+  /**
+   * Comprehensive Three.js object disposal to prevent memory leaks
+   */
+  disposeThreeJS() {
+    try {
+      GameLogger.info('Cleanup', 'Starting Three.js object disposal...');
+
+      // Dispose all registered objects in render optimizer
+      if (this.renderOptimizer) {
+        [...this.renderOptimizer.staticObjects, ...this.renderOptimizer.dynamicObjects].forEach((item) => {
+          this.disposeObject3D(item.object);
+        });
+
+        // Clear optimizer arrays
+        this.renderOptimizer.staticObjects = [];
+        this.renderOptimizer.dynamicObjects = [];
+        this.renderOptimizer = null;
+        GameLogger.debug('Cleanup', 'Render optimizer disposed');
+      }
+
+      // Dispose scene objects if scene exists
+      if (this.scene) {
+        this.scene.traverse((object) => {
+          this.disposeObject3D(object);
+        });
+
+        this.scene.clear();
+        this.scene = null;
+        GameLogger.debug('Cleanup', 'Scene disposed');
+      }
+
+      // Dispose renderer
+      if (this.renderer) {
+        this.renderer.dispose();
+        this.renderer.forceContextLoss();
+        this.renderer.domElement.remove();
+        this.renderer = null;
+        GameLogger.debug('Cleanup', 'Renderer disposed');
+      }
+
+      GameLogger.info('Cleanup', 'Three.js disposal completed');
+    } catch (error) {
+      GameLogger.error('Cleanup', 'Error during Three.js disposal', error);
+    }
+  }
+
+  /**
+   * Dispose individual Three.js object and its resources
+   * @param {THREE.Object3D} object - Object to dispose
+   */
+  disposeObject3D(object) {
+    if (!object) return;
+
+    // Dispose geometry
+    if (object.geometry) {
+      object.geometry.dispose();
     }
 
-    if (this.stop) {
-      this.stop();
+    // Dispose material(s)
+    if (object.material) {
+      if (Array.isArray(object.material)) {
+        object.material.forEach((material) => this.disposeMaterial(material));
+      } else {
+        this.disposeMaterial(object.material);
+      }
     }
+
+    // Dispose textures
+    if (object.material?.map) object.material.map.dispose();
+    if (object.material?.normalMap) object.material.normalMap.dispose();
+    if (object.material?.bumpMap) object.material.bumpMap.dispose();
+    if (object.material?.envMap) object.material.envMap.dispose();
+  }
+
+  /**
+   * Dispose Three.js material and its textures
+   * @param {THREE.Material} material - Material to dispose
+   */
+  disposeMaterial(material) {
+    if (!material) return;
+
+    // Dispose all textures in material
+    Object.keys(material).forEach((key) => {
+      const value = material[key];
+      if (value && value.isTexture) {
+        value.dispose();
+      }
+    });
+
+    material.dispose();
+  }
+
+  /**
+   * Clean up UI elements to prevent memory leaks
+   */
+  cleanupUIElements() {
+    const uiElements = ['scoreElement', 'timerElement', 'buffIconElement', 'lifePointElement', 'overlay'];
+
+    uiElements.forEach((elementName) => {
+      if (this[elementName]) {
+        if (this[elementName].parentNode) {
+          this[elementName].parentNode.removeChild(this[elementName]);
+        }
+        this[elementName] = null;
+        GameLogger.debug('Cleanup', `${elementName} cleaned up`);
+      }
+    });
   }
 
   disposeThreeJS() {

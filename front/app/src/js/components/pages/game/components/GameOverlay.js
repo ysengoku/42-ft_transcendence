@@ -172,7 +172,7 @@ export class GameOverlay extends HTMLElement {
         closeButton.className = 'btn btn-secondary fw-bold';
         closeButton.textContent = 'Back to Saloon';
         closeButton.onclick = () => {
-          this.hideOverlay();
+          this.hide();
           // Restore the game UI before leaving (in case user navigates back)
           const gameComponent = this.closest('singleplayer-game');
           if (gameComponent && gameComponent.showGameUI) {
