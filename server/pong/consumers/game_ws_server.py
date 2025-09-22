@@ -29,9 +29,11 @@ class GameServerConsumer(GuardedWebsocketConsumer):
         self.game_room_id: str = self.scope["url_route"]["kwargs"]["game_room_id"]
         self.game_room_group_name = f"game_room_{self.game_room_id}"
         self.accept()
-        self.init_rate_limiter(*GuardedWebsocketConsumer.RateLimits.GAME_CONSUMER)
+        self.init_rate_limiter(
+            *GuardedWebsocketConsumer.RateLimits.GAME_CONSUMER)
         if not self.user:
-            logger.warning("[GameRoom.connect]: unauthorized user tried to join game room {%s}", self.game_room_id)
+            logger.warning(
+                "[GameRoom.connect]: unauthorized user tried to join game room {%s}", self.game_room_id)
             self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
 
@@ -45,7 +47,8 @@ class GameServerConsumer(GuardedWebsocketConsumer):
             self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
 
-        self.game_room: GameRoom = game_room_qs.for_players(self.user.profile).for_ongoing_status().first()
+        self.game_room: GameRoom = game_room_qs.for_players(
+            self.user.profile).for_ongoing_status().first()
         if not self.game_room:
             logger.warning(
                 "[GameRoom.connect]: illegal user {%s} tried to join game room {%s}",
@@ -55,10 +58,13 @@ class GameServerConsumer(GuardedWebsocketConsumer):
             self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
 
-        self.players = list(GameRoomPlayer.objects.select_related("profile").filter(game_room=self.game_room))
+        self.players = list(GameRoomPlayer.objects.select_related(
+            "profile").filter(game_room=self.game_room))
         try:
-            self.player = next(player for player in self.players if player.profile == self.user.profile)
-            self.opponent = next(player for player in self.players if player.profile != self.user.profile)
+            self.player = next(
+                player for player in self.players if player.profile == self.user.profile)
+            self.opponent = next(
+                player for player in self.players if player.profile != self.user.profile)
         except StopIteration:
             logger.warning(
                 "[GameRoom.connect]: invalid game room {%s}: player or opponent are missing",
@@ -66,7 +72,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
             )
             self.close(CloseCodes.NORMAL_CLOSURE)
             return
-            
+
         self.player.inc_number_of_connections()
         if self.player.number_of_connections > 1:
             logger.warning(
@@ -85,8 +91,10 @@ class GameServerConsumer(GuardedWebsocketConsumer):
         )
         profile = self.user.profile
         player_id = str(self.player.id)
-        async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
-        async_to_sync(self.channel_layer.group_add)(f"player_{player_id}", self.channel_name)
+        async_to_sync(self.channel_layer.group_add)(
+            self.game_room_group_name, self.channel_name)
+        async_to_sync(self.channel_layer.group_add)(
+            f"player_{player_id}", self.channel_name)
         is_in_tournament = self.game_room.is_in_tournament()
         if is_in_tournament:
             bracket: Bracket = self.game_room.bracket
@@ -94,11 +102,13 @@ class GameServerConsumer(GuardedWebsocketConsumer):
             bracket_id = str(bracket.id)
             tournament_id = str(bracket.round.tournament.id)
             name = bracket.participant1.alias if bracket.participant1.profile == profile else bracket.participant2.alias
-            opponents_name = bracket.participant1.alias if bracket.participant1.profile != profile else bracket.participant2.alias
+            opponents_name = (
+                bracket.participant1.alias if bracket.participant1.profile != profile else bracket.participant2.alias
+            )
         else:
             name = self.user.nickname if self.user.nickname else self.user.username
             opponents_user = self.opponent.profile.user
-            opponents_name = opponents_user.nickname if opponents_user.nickname else opponents.user.username
+            opponents_name = opponents_user.nickname if opponents_user.nickname else opponents_user.username
             bracket_id = None
             tournament_id = None
         async_to_sync(self.channel_layer.send)(
@@ -123,8 +133,10 @@ class GameServerConsumer(GuardedWebsocketConsumer):
         if close_code == CloseCodes.ILLEGAL_CONNECTION or not self.player:
             return
 
-        async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
-        async_to_sync(self.channel_layer.group_discard)(f"player_{str(self.player.id)}", self.channel_name)
+        async_to_sync(self.channel_layer.group_discard)(
+            self.game_room_group_name, self.channel_name)
+        async_to_sync(self.channel_layer.group_discard)(
+            f"player_{str(self.player.id)}", self.channel_name)
         self.player.dec_number_of_connections()
         if close_code == CloseCodes.NORMAL_CLOSURE:
             logger.info(
@@ -210,9 +222,11 @@ class GameServerConsumer(GuardedWebsocketConsumer):
     # DO NOT CALL THE `del` ON `type` KEY. This breaks Django Channels.
     def worker_to_client_close(self, event: GameServerToClient.WorkerToClientClose):
         """Send data to the client and close connection."""
-        self.send(text_data=json.dumps({k: v for k, v in event.items() if k != "type"}))
+        self.send(text_data=json.dumps(
+            {k: v for k, v in event.items() if k != "type"}))
         self.close(event["close_code"])
 
     def worker_to_client_open(self, event: GameServerToClient.WorkerToClientOpen):
         """Send data to the client without closing connection."""
-        self.send(text_data=json.dumps({k: v for k, v in event.items() if k != "type"}))
+        self.send(text_data=json.dumps(
+            {k: v for k, v in event.items() if k != "type"}))

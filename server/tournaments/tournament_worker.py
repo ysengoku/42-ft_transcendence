@@ -11,7 +11,7 @@ from django.db import transaction
 
 from pong.models import GameRoom
 
-from .models import Bracket, Participant, Round, Tournament
+from .models import Bracket, Participant, Tournament
 from .schemas import BracketSchema, RoundSchema
 
 logger = logging.getLogger("server")
