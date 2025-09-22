@@ -27,9 +27,6 @@
   "dependencies": {
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
-    "three": "^0.172.0",
-    "cannon-es": "^0.20.0",
-    "dat.gui": "^0.7.9",
-    "three-orbitcontrols": "^2.110.3"
+    "three": "^0.172.0"
   }
 }

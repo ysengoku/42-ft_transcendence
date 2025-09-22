@@ -20,7 +20,6 @@ import { auth } from '@auth';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 import './components/index';
 import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
-import { Game } from './Game';
 
 /* eslint no-var: "off" */
 /* eslint-disable new-cap */
@@ -852,7 +851,7 @@ export class MultiplayerGame extends HTMLElement {
    * @returns {boolean} True if animations are available
    */
   isAnimationSystemReady(bumper) {
-    return (bumper?.gltfStore?.mixer && bumper.gltfStore.action);
+    return bumper?.gltfStore?.mixer && bumper.gltfStore.action;
   }
 
   /**
@@ -1436,7 +1435,6 @@ export class MultiplayerGame extends HTMLElement {
       this.renderOptimizer.registerDynamic(Coin.cylinderMesh, 'coin');
     }
 
-
     // Enhanced playing field - already created above with textured ground
 
     const clock = new THREE.Clock();
@@ -1651,20 +1649,30 @@ export class MultiplayerGame extends HTMLElement {
       }
     }
 
-    const decreaseLifePointUI = (data) => {
-      const playerMissed = data.bumper_1.score > serverState.bumper_1.score ? 2 : 1;
-      const playerNumberToDecrease = clientState.playerNumber === 1 ? playerMissed - 1 : playerMissed === 1 ? 1 : 0;
-      const newScore = playerMissed === 1 ? data.bumper_2.score : data.bumper_1.score;
-      this.lifePointElement?.updatePoint(
-        playerNumberToDecrease,
-        20 - (20 / this.#state.gameOptions.score_to_win) * newScore,
-      );
+    const updateLifePointUI = (data) => {
+      if (data.bumper_1.score != serverState.bumper_1.score) {
+        const playerNumberToUpdate = clientState.playerNumber === 1 ? 1 : 0;
+        this.lifePointElement?.updatePoint(
+          playerNumberToUpdate,
+          20 - (20 / this.#state.gameOptions.score_to_win) * data.bumper_1.score,
+        );
+      }
+      if (data.bumper_2.score != serverState.bumper_2.score) {
+        const playerNumberToUpdate = clientState.playerNumber === 2 ? 1 : 0;
+        this.lifePointElement?.updatePoint(
+          playerNumberToUpdate,
+          20 - (20 / this.#state.gameOptions.score_to_win) * data.bumper_2.score,
+        );
+      }
     };
 
     const updateScoreUI = (data) => {
-      data.bumper_1.score > serverState.bumper_1.score
-        ? this.scoreElement?.updateScore(0, data.bumper_1.score)
-        : this.scoreElement?.updateScore(1, data.bumper_2.score);
+      if (data.bumper_1.score != serverState.bumper_1.score) {
+        this.scoreElement?.updateScore(0, data.bumper_1.score);
+      }
+      if (data.bumper_2.score != serverState.bumper_2.score) {
+        this.scoreElement?.updateScore(1, data.bumper_2.score);
+      }
     };
 
     const updateTimerUI = (elapsedSeconds) => {
@@ -1861,9 +1869,13 @@ export class MultiplayerGame extends HTMLElement {
       switch (data.action) {
         case 'state_updated':
           updateTimerUI(data.state.elapsed_seconds);
-          if (data.state.is_someone_scored) {
+          if (
+            data.state.is_someone_scored ||
+            data.state.bumper_1.score !== serverState.bumper_1.score ||
+            data.state.bumper_2.score !== serverState.bumper_2.score
+          ) {
             updateScoreUI(data.state);
-            decreaseLifePointUI(data.state);
+            updateLifePointUI(data.state);
           }
           updateServerState(data.state);
           reconcileWithServer();
@@ -1889,9 +1901,9 @@ export class MultiplayerGame extends HTMLElement {
           if (!Bumpers) {
             Bumpers = await Promise.all([BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)]);
           }
-          if (this.renderOptimizer){
+          if (this.renderOptimizer) {
             if (Bumpers[0].playerGlb) {
-            this.renderOptimizer.registerDynamic(Bumpers[0].playerGlb, 'player1');
+              this.renderOptimizer.registerDynamic(Bumpers[0].playerGlb, 'player1');
             }
             if (Bumpers[1].playerGlb) {
               this.renderOptimizer.registerDynamic(Bumpers[1].playerGlb, 'player2');
