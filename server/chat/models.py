@@ -177,7 +177,6 @@ class NotificationQuerySet(models.QuerySet):
         notification_data: dict | None = None,  # noqa: B006
         date: datetime = None,
         is_read: bool = False,
-        invitee: Profile = None,
     ):
         notification_data = notification_data or {}
         data = sender.to_username_nickname_avatar_schema() | notification_data
@@ -191,6 +190,7 @@ class NotificationQuerySet(models.QuerySet):
         notification_action: str,
         notification_data: dict | None = None,  # noqa: B006
         date: datetime = None,
+        invitee: Profile = None,
     ):
         """
         `notification_data` is a data specific to the notification of the `notification_action`.
