@@ -94,7 +94,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
             bracket_id = str(bracket.id)
             tournament_id = str(bracket.round.tournament.id)
             name = bracket.participant1.alias if bracket.participant1.profile == profile else bracket.participant2.alias
-            opponents_name = bracket.participant2.alias if bracket.participant1.profile == profile else bracket.participant2.alias
+            opponents_name = bracket.participant1.alias if bracket.participant1.profile != profile else bracket.participant2.alias
         else:
             name = self.user.nickname if self.user.nickname else self.user.username
             opponents_user = self.opponent.profile.user

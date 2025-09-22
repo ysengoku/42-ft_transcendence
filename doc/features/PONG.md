@@ -36,6 +36,12 @@ The heart of the **Peacemakers** platform is [the legendary Pong game](https://e
 (TODO: screenshots of models made in blender)
 
 ---
+### Computer Opponent
+**Peacemakers: Ponggers Edition** supports playing against another opponent locally, but also, against an AI opponent. The AI was designed to have dynamic difficulty based on the player's skill. It's an algorithmic AI (as opposed to deep learning AI) made with player's fun in mind: it's dynamically reacting to [buffs and debuffs](#additional-gameplay-features), and adjusts its own behaviour based on the gap between the player and itself. So, for example, if the player struggles against the *computer opponent*, it shifts its difficulty to be more forgiving. The opposite is true as well: skilled players might find themselves challenged by AI.
+
+AI uses multiple parameters to determine its own behaviour against the player, in order to push the player to their limit without being impossible to beat. Like every other gameplay mode in the **Peacemakeers: Ponggers Edition**, the matches against the machine can use the buffs and debuffs
+
+---
 ### Game Settings
 
 Different users have different tastes, and the **Peacemakers** platform allows them to tune their game settings to suit their needs.

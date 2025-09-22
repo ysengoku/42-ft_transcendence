@@ -1482,7 +1482,7 @@ class GameWorkerConsumer(AsyncConsumer):
 
         return await database_sync_to_async(Bracket.objects.update_finished_bracket)(
             bracket_id=match.bracket_id,
-            winner_profile_or_id=winner.profile_id,
+            winner_profile_id=winner.profile_id,
             winners_score=winner.bumper.score,
             losers_score=loser.bumper.score,
             status=status,
