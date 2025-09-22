@@ -1939,7 +1939,7 @@ export class MultiplayerGame extends HTMLElement {
             }
             cardboardModels[1].visible = false;
             cardboardModels[2].visible = false;
-          }          
+          }      
 
           // Update bumper speeds with game speed multiplier
           if (clientState.bumper) {

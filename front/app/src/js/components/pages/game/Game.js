@@ -1458,7 +1458,7 @@ export class Game extends HTMLElement {
     };
 
     // Ai related variables
-    let calculatedBumperPos = Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position;
+    const calculatedBumperPos = Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position;
     let bumperP1Subtick = 0;
     let bumperP2Subtick = 0;
 
