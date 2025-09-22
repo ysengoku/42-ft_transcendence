@@ -42,7 +42,7 @@ const GameLogger = {
   },
   info: (context, message) => {
     if (process.env.NODE_ENV === 'development') {
-      onsole.log(`[Game:${context}] INFO: ${message}`);
+      console.log(`[Game:${context}] INFO: ${message}`);
     }
   },
   debug: (context, message) => {
@@ -296,7 +296,7 @@ export class Game extends HTMLElement {
    * @returns {boolean} True if animations are available
    */
   isAnimationSystemReady(bumper) {
-    return !!(bumper?.gltfStore?.mixer && bumper.gltfStore.action);
+    return (bumper?.gltfStore?.mixer && bumper.gltfStore.action);
   }
 
   /**
@@ -1059,14 +1059,10 @@ export class Game extends HTMLElement {
     // Factory function for creating randomly rotated cacti
     // Factory function for creating randomly rotated cacti with error handling
     const CactusFactory = async (posX, posY, posZ) => {
-      try {
-        const cactusGlb = await modelCreate(posZ, posY, posX, 1.8, 1.8, 1.8, cactus);
-        cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
-        return { cactusGlb };
-      } catch (error) {
-        GameLogger.warn('CactusFactory', `Failed to load cactus, using fallback: ${error.message}`);
-        return { cactusGlb: this.createFallbackModel(posZ, posY, posX, 1.8, 1.8, 1.8) };
-      }
+      const cactusGlb = await modelCreate(posZ, posY, posX, 1.8, 1.8, 1.8, cactus);
+      cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
+      return { cactusGlb };
+
     };
 
     // Generate safe positions for cacti (avoiding play area and other cacti)
@@ -1146,6 +1142,9 @@ export class Game extends HTMLElement {
     const WallFactory = async (posX, posY, posZ) => {
       const fenceGlb = await modelCreate(posX, posY, posZ, 0.8, 0.5, 1, fence);
       fenceGlb.rotateY(-pi / 2); // Rotate to face inward
+      if (this.renderOptimizer && fenceGlb) {
+        this.renderOptimizer.registerStatic(fenceGlb, 'wall');
+      }
       return {
         fenceGlb,
       };
@@ -1166,6 +1165,7 @@ export class Game extends HTMLElement {
     const Ball = await (async (posX, posY, posZ) => {
       const bulletGlb = await modelCreate(posX, posY, posZ, 1, 1, 1, bullet);
       bulletGlb.rotateX(pi / 2);
+
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
       const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * GAME_SPEED);
@@ -1309,7 +1309,7 @@ export class Game extends HTMLElement {
       // Register player furniture as static (they don't move much)
       Bumpers.forEach((bumper, index) => {
         bumper.modelsGlb.forEach((model, modelIndex) => {
-          this.renderOptimizer.registerStatic(model, `furniture_p${index}_${modelIndex}`);
+          this.renderOptimizer.registerDynamic(model, `furniture_p${index}_${modelIndex}`);
         });
       });
 
@@ -1694,12 +1694,13 @@ export class Game extends HTMLElement {
       // Create coin
       Coin = await (async (posX, posY, posZ) => {
         const CoinGlb = await modelCreate(0, 0, 0, 0.45, 0.45, 0.45, coin);
-        CoinGlb.position.x = posX;
-        CoinGlb.position.y = posY;
-        CoinGlb.position.z = posZ;
+        CoinGlb.position.set(posX, posY, posZ);
+
         const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
         const velocity = new THREE.Vector3(0.01 * GAME_SPEED, 0, 0);
         let lengthHalf = 0.25;
+        if (this.renderOptimizer)
+          this.renderOptimizer.registerDynamic(CoinGlb, 'coin');
 
         return {
           get lengthHalf() {
