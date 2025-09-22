@@ -178,3 +178,6 @@ node_modules/
 copy_files.sh
 .idea
 .idea/
+
+# vim swap files
+*.swp

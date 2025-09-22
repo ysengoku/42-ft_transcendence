@@ -168,6 +168,7 @@ class Player:
     reconnection_timer: asyncio.Task | None = None
     profile_id: int = -1
     name: str = ""
+    opponents_name: str = ""
     avatar: str = ""
     elo: int = 0
 
@@ -177,14 +178,7 @@ class Player:
             task.cancel()
         self.reconnection_timer = None
 
-    def as_dict(self, anonymous: bool = False):
-        if anonymous:
-            return {
-                "alias": self.name,
-                "avatar": self.avatar,
-                "player_number": 1 if self.bumper.dir_z == 1 else 2,
-                "score": self.bumper.score,
-            }
+    def as_dict(self):
         return {
             "name": self.name,
             "avatar": self.avatar,
@@ -968,6 +962,7 @@ class MultiplayerPongMatch(BasePong):
         player.set_as_connected(asyncio.get_event_loop().time())
         player.profile_id = int(player_connected_event["profile_id"])
         player.name = player_connected_event["name"]
+        player.opponents_name = player_connected_event["opponents_name"]
         player.avatar = player_connected_event["avatar"]
         player.elo = player_connected_event["elo"]
         if player.bumper.dir_z == 1:
@@ -1399,6 +1394,8 @@ class GameWorkerConsumer(AsyncConsumer):
             GameServerToClient.PlayerJoined(
                 type="worker_to_client_open",
                 action="player_joined",
+                name=player.name,
+                opponents_name=player.opponents_name,
                 player_id=player_id,
                 player_number=1 if player.bumper.dir_z == 1 else 2,
                 is_paused=match.status == MultiplayerPongMatchStatus.PAUSED,
@@ -1469,11 +1466,11 @@ class GameWorkerConsumer(AsyncConsumer):
     ) -> Match | Bracket | None:
         if not match.is_in_tournament:
             match_result = await database_sync_to_async(Match.objects.resolve)(
-                winner.profile_id,
-                loser.profile_id,
-                winner.bumper.score,
-                loser.bumper.score,
-                match.ranked,
+                winner_profile_or_id=winner.profile_id,
+                loser_profile_or_id=loser.profile_id,
+                winners_score=winner.bumper.score,
+                losers_score=loser.bumper.score,
+                ranked=match.ranked,
             )
             if not match_result:
                 return None
@@ -1484,11 +1481,11 @@ class GameWorkerConsumer(AsyncConsumer):
             return match_db
 
         return await database_sync_to_async(Bracket.objects.update_finished_bracket)(
-            match.bracket_id,
-            winner.profile_id,
-            winner.bumper.score,
-            loser.bumper.score,
-            status,
+            bracket_id=match.bracket_id,
+            winner_profile_or_id=winner.profile_id,
+            winners_score=winner.bumper.score,
+            losers_score=loser.bumper.score,
+            status=status,
         )
 
     async def _send_player_won_event(
