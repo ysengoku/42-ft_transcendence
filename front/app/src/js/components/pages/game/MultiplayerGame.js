@@ -20,6 +20,7 @@ import { auth } from '@auth';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 import './components/index';
 import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
+import { Game } from './Game';
 
 /* eslint no-var: "off" */
 /* eslint-disable new-cap */
@@ -29,16 +30,24 @@ import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
  */
 const GameLogger = {
   error: (context, message, error = null) => {
-    console.error(`[MultiplayerGame:${context}] ERROR: ${message}`, error || '');
+    if (process.env.NODE_ENV === 'development') {
+      console.error(`[MultiplayerGame:${context}] ERROR: ${message}`, error || '');
+    }
   },
   warn: (context, message) => {
-    console.warn(`[MultiplayerGame:${context}] WARNING: ${message}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[MultiplayerGame:${context}] WARNING: ${message}`);
+    }
   },
   info: (context, message) => {
-    console.log(`[MultiplayerGame:${context}] INFO: ${message}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[MultiplayerGame:${context}] INFO: ${message}`);
+    }
   },
   debug: (context, message) => {
-    console.log(`[MultiplayerGame:${context}] DEBUG: ${message}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[MultiplayerGame:${context}] DEBUG: ${message}`);
+    }
   },
 };
 
@@ -500,7 +509,7 @@ export class MultiplayerGame extends HTMLElement {
    * @param {Error} error - Optional error object
    */
   handleError(errorType, error = null) {
-    console.error(`Game Error [${errorType}]:`, error);
+    GameLogger.error(`Game Error [${errorType}]:`, '', error);
 
     // Hide game UI when error occurs
     this.hideGameUI();
@@ -1112,7 +1121,7 @@ export class MultiplayerGame extends HTMLElement {
         cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
         return { cactusGlb };
       } catch (error) {
-        console.warn('Failed to load cactus, using fallback', error);
+        GameLogger.warn('CactusFactory', `Failed to load cactus, using fallback: ${error}`);
         return { cactusGlb: this.createFallbackModel(posZ, posY, posX, 1.8, 1.8, 1.8) };
       }
     };
@@ -1152,7 +1161,7 @@ export class MultiplayerGame extends HTMLElement {
         cacti[index] = cactus;
       });
     } catch (error) {
-      console.warn('Some cacti failed to load:', error);
+      GameLogger.warn('CactusFactory', `Some cacti failed to load: ${error}`);
     }
 
     // Create layered hills for background depth
@@ -1236,7 +1245,7 @@ export class MultiplayerGame extends HTMLElement {
         CoinGlb.position.set(posX, posY, posZ);
         CoinMesh = CoinGlb;
       } catch (error) {
-        console.warn('Failed to load coin model, using fallback geometry', error);
+        GameLogger.warn('CoinFactory', `Failed to load coin model, using fallback geometry: ${error}`);
         // Fallback to basic geometry
         const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.1);
         CoinMesh = new THREE.Mesh(cylinderGeometry, normalMaterial);
@@ -1273,7 +1282,7 @@ export class MultiplayerGame extends HTMLElement {
         bulletGlb.rotateX(pi / 2);
         BallMesh = bulletGlb;
       } catch (error) {
-        console.warn('Failed to load ball model, using fallback geometry', error);
+        GameLogger.warn('BallFactory', `Failed to load ball model, using fallback geometry: ${error}`);
         // Fallback to basic sphere
         const sphereGeometry = new THREE.SphereGeometry(0.5);
         BallMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
@@ -1302,7 +1311,7 @@ export class MultiplayerGame extends HTMLElement {
         fenceGlb.rotateY(-pi / 2); // Rotate to face inward
         return { fenceGlb };
       } catch (error) {
-        console.warn('Failed to load fence, using fallback', error);
+        GameLogger.warn('WallFactory', `Failed to load fence model, using fallback: ${error}`);
         return { fenceGlb: this.createFallbackModel(posX, posY, posZ, 0.8, 0.5, 1) };
       }
     };
@@ -1927,10 +1936,10 @@ export class MultiplayerGame extends HTMLElement {
           if (clientState.enemyBumper) {
             clientState.enemyBumper.speed = BUMPER_SPEED_PER_SECOND * this.#state.gameOptions.game_speed;
           }
-          console.log(clientState.bumper.speed);
+          GameLogger.log('', clientState.bumper.speed);
           break;
         case 'game_started':
-          console.log('Game started', data);
+          GameLogger.info('Game started', data);
           this.overlay.hide();
           break;
         case 'game_paused':

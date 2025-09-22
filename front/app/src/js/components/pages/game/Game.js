@@ -31,16 +31,24 @@ import { DEFAULT_AVATAR } from '@env';
  */
 const GameLogger = {
   error: (context, message, error = null) => {
-    console.error(`[Game:${context}] ERROR: ${message}`, error || '');
+    if (process.env.NODE_ENV === 'development') {
+      console.error(`[Game:${context}] ERROR: ${message}`, error || '');
+    }
   },
   warn: (context, message) => {
-    console.warn(`[Game:${context}] WARNING: ${message}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[Game:${context}] WARNING: ${message}`);
+    }
   },
   info: (context, message) => {
-    console.log(`[Game:${context}] INFO: ${message}`);
+    if (process.env.NODE_ENV === 'development') {
+      onsole.log(`[Game:${context}] INFO: ${message}`);
+    }
   },
   debug: (context, message) => {
-    console.log(`[Game:${context}] DEBUG: ${message}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Game:${context}] DEBUG: ${message}`);
+    }
   },
 };
 
