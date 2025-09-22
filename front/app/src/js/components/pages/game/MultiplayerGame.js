@@ -1936,7 +1936,7 @@ export class MultiplayerGame extends HTMLElement {
           if (clientState.enemyBumper) {
             clientState.enemyBumper.speed = BUMPER_SPEED_PER_SECOND * this.#state.gameOptions.game_speed;
           }
-          GameLogger.log('', clientState.bumper.speed);
+          GameLogger.debug('clientState', clientState.bumper.speed);
           break;
         case 'game_started':
           GameLogger.info('Game started', data);
