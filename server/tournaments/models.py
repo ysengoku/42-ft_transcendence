@@ -4,9 +4,10 @@ import logging
 import uuid
 from typing import Literal
 
+from channels.db import database_sync_to_async
 from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Prefetch
 from django.utils import timezone
 
@@ -194,6 +195,12 @@ class Tournament(models.Model):
     def has_participant(self, profile: Profile):
         return self.participants.filter(profile=profile).exists()
 
+    @database_sync_to_async
+    def cancel_tournament(self):
+        with transaction.atomic():
+            self.status = Tournament.CANCELLED
+            self.save(update_fields=["status"])
+
 
 class Round(models.Model):
     PENDING = "pending"
@@ -219,6 +226,21 @@ class Round(models.Model):
 
     def __str__(self):
         return f"Round {self.number} - {self.tournament.name}"
+
+    @database_sync_to_async
+    def set_ongoing(self):
+        with transaction.atomic():
+            if self.status == Round.ONGOING:
+                return True
+            self.status = Round.ONGOING
+            self.save(update_fields=["status"])
+            return False
+
+    @database_sync_to_async
+    def set_finished(self):
+        with transaction.atomic():
+            self.status = Round.FINISHED
+            self.save(update_fields=["status"])
 
 
 class BracketQuerySet(models.QuerySet):
