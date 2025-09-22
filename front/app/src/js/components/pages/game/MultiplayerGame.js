@@ -1659,20 +1659,30 @@ export class MultiplayerGame extends HTMLElement {
       }
     }
 
-    const decreaseLifePointUI = (data) => {
-      const playerMissed = data.bumper_1.score > serverState.bumper_1.score ? 2 : 1;
-      const playerNumberToDecrease = clientState.playerNumber === 1 ? playerMissed - 1 : playerMissed === 1 ? 1 : 0;
-      const newScore = playerMissed === 1 ? data.bumper_2.score : data.bumper_1.score;
-      this.lifePointElement?.updatePoint(
-        playerNumberToDecrease,
-        20 - (20 / this.#state.gameOptions.score_to_win) * newScore,
-      );
+    const updateLifePointUI = (data) => {
+      if (data.bumper_1.score != serverState.bumper_1.score) {
+        const playerNumberToUpdate = clientState.playerNumber === 1 ? 1 : 0;
+        this.lifePointElement?.updatePoint(
+          playerNumberToUpdate,
+          20 - (20 / this.#state.gameOptions.score_to_win) * data.bumper_1.score,
+        );
+      }
+      if (data.bumper_2.score != serverState.bumper_2.score) {
+        const playerNumberToUpdate = clientState.playerNumber === 2 ? 0 : 1;
+        this.lifePointElement?.updatePoint(
+          playerNumberToUpdate,
+          20 - (20 / this.#state.gameOptions.score_to_win) * data.bumper_2.score,
+        );
+      }
     };
 
     const updateScoreUI = (data) => {
-      data.bumper_1.score > serverState.bumper_1.score
-        ? this.scoreElement?.updateScore(0, data.bumper_1.score)
-        : this.scoreElement?.updateScore(1, data.bumper_2.score);
+      if (data.bumper_1.score != serverState.bumper_1.score) {
+        this.scoreElement?.updateScore(0, data.bumper_1.score);
+      }
+      if (data.bumper_2.score != serverState.bumper_2.score) {
+        this.scoreElement?.updateScore(1, data.bumper_2.score);
+      }
     };
 
     const updateTimerUI = (elapsedSeconds) => {
@@ -1869,9 +1879,13 @@ export class MultiplayerGame extends HTMLElement {
       switch (data.action) {
         case 'state_updated':
           updateTimerUI(data.state.elapsed_seconds);
-          if (data.state.is_someone_scored) {
+          if (
+            data.state.is_someone_scored ||
+            data.state.bumper_1.score !== serverState.bumper_1.score ||
+            data.state.bumper_2.score !== serverState.bumper_2.score
+          ) {
             updateScoreUI(data.state);
-            decreaseLifePointUI(data.state);
+            updateLifePointUI(data.state);
           }
           updateServerState(data.state);
           reconcileWithServer();
