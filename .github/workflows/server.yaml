@@ -57,7 +57,7 @@ jobs:
         run: |
           python manage.py makemigrations
           python manage.py migrate
-
+          
       - name: Run Django unit tests
         working-directory: server/
         env:

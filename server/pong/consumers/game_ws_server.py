@@ -55,7 +55,18 @@ class GameServerConsumer(GuardedWebsocketConsumer):
             self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
 
-        self.player = GameRoomPlayer.objects.filter(profile=self.user.profile, game_room=self.game_room).first()
+        self.players = list(GameRoomPlayer.objects.select_related("profile").filter(game_room=self.game_room))
+        try:
+            self.player = next(player for player in self.players if player.profile == self.user.profile)
+            self.opponent = next(player for player in self.players if player.profile != self.user.profile)
+        except StopIteration:
+            logger.warning(
+                "[GameRoom.connect]: invalid game room {%s}: player or opponent are missing",
+                self.game_room_id,
+            )
+            self.close(CloseCodes.NORMAL_CLOSURE)
+            return
+            
         self.player.inc_number_of_connections()
         if self.player.number_of_connections > 1:
             logger.warning(
@@ -83,8 +94,11 @@ class GameServerConsumer(GuardedWebsocketConsumer):
             bracket_id = str(bracket.id)
             tournament_id = str(bracket.round.tournament.id)
             name = bracket.participant1.alias if bracket.participant1.profile == profile else bracket.participant2.alias
+            opponents_name = bracket.participant2.alias if bracket.participant1.profile == profile else bracket.participant2.alias
         else:
             name = self.user.nickname if self.user.nickname else self.user.username
+            opponents_user = self.opponent.profile.user
+            opponents_name = opponents_user.nickname if opponents_user.nickname else opponents.user.username
             bracket_id = None
             tournament_id = None
         async_to_sync(self.channel_layer.send)(
@@ -95,6 +109,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
                 player_id=player_id,
                 profile_id=str(profile.id),
                 name=name,
+                opponents_name=opponents_name,
                 avatar=profile.avatar,
                 elo=profile.elo,
                 settings=self.game_room.settings,

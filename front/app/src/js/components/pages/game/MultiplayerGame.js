@@ -717,7 +717,7 @@ export class MultiplayerGame extends HTMLElement {
       switch (data.action) {
         case 'state_updated':
           updateTimerUI(data.state.elapsed_seconds);
-          if (data.state.is_someone_scored) {
+          if (data.state.is_someone_scored || data.state.bumper_1 !== serverState.bumper_1 || data.state.bumper_2 !== serverState.bumper_2) {
             updateScoreUI(data.state);
             decreaseLifePointUI(data.state);
           }
@@ -736,8 +736,8 @@ export class MultiplayerGame extends HTMLElement {
           camera.position.set(0, 15, -20);
           camera.lookAt(new THREE.Vector3(0, 0, 0));
           clientState.playerNumber === 1
-            ? this.scoreElement?.setNames(this.#state.userPlayerName, this.#state.opponentPlayerName)
-            : this.scoreElement?.setNames(this.#state.opponentPlayerName, this.#state.userPlayerName);
+            ? this.scoreElement?.setNames(data.name, data.opponents_name)
+            : this.scoreElement?.setNames(data.opponents_name, data.name)
           this.timerElement?.setInitialTimeLimit(data.settings.time_limit * 60);
           this.timerElement?.render();
           this.#state.gameOptions = data.settings;
