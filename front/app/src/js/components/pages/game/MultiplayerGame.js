@@ -16,8 +16,6 @@ export class MultiplayerGame extends HTMLElement {
   #ktx2Loader = null;
   #pongSocket = null;
   #state = {
-    userPlayerName: 'You',
-    opponentPlayerName: 'Opponent',
     gameOptions: {},
   };
 
@@ -54,11 +52,6 @@ export class MultiplayerGame extends HTMLElement {
 
     this.#state.gameId = param.id;
     await this.render();
-  }
-
-  setQueryParam(query) {
-    this.#state.userPlayerName = query.get('userPlayerName') || 'You';
-    this.#state.opponentPlayerName = query.get('opponentPlayerName') || 'Opponent';
   }
 
   disconnectedCallback() {
@@ -717,7 +710,11 @@ export class MultiplayerGame extends HTMLElement {
       switch (data.action) {
         case 'state_updated':
           updateTimerUI(data.state.elapsed_seconds);
-          if (data.state.is_someone_scored || data.state.bumper_1 !== serverState.bumper_1 || data.state.bumper_2 !== serverState.bumper_2) {
+          if (
+            data.state.is_someone_scored ||
+            data.state.bumper_1 !== serverState.bumper_1 ||
+            data.state.bumper_2 !== serverState.bumper_2
+          ) {
             updateScoreUI(data.state);
             decreaseLifePointUI(data.state);
           }
@@ -737,7 +734,7 @@ export class MultiplayerGame extends HTMLElement {
           camera.lookAt(new THREE.Vector3(0, 0, 0));
           clientState.playerNumber === 1
             ? this.scoreElement?.setNames(data.name, data.opponents_name)
-            : this.scoreElement?.setNames(data.opponents_name, data.name)
+            : this.scoreElement?.setNames(data.opponents_name, data.name);
           this.timerElement?.setInitialTimeLimit(data.settings.time_limit * 60);
           this.timerElement?.render();
           this.#state.gameOptions = data.settings;

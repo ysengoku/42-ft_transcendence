@@ -235,16 +235,7 @@ export class Tournament extends HTMLElement {
     switch (this.#state.userDataInTournament.status) {
       case PARTICIPANT_STATUS.PLAYING:
         const gameId = this.#state.currentUserBracket.game_id;
-        const userAlias = this.#state.userDataInTournament.alias;
-        const opponentAlias =
-          this.#state.currentUserBracket.participant1.alias === userAlias
-            ? this.#state.currentUserBracket.participant2.alias
-            : this.#state.currentUserBracket.participant1.alias;
-        const queryParams = new URLSearchParams({
-          userPlayerName: userAlias,
-          opponentPlayerName: opponentAlias,
-        }).toString();
-        router.redirect(`multiplayer-game/${gameId}?${queryParams}`);
+        router.redirect(`multiplayer-game/${gameId}`);
         log.info('User is playing a match, redirecting to game page:', gameId);
         return false;
       case PARTICIPANT_STATUS.ELIMINATED:
