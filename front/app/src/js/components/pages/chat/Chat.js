@@ -273,7 +273,7 @@ export class Chat extends HTMLElement {
 
   handleToggleLikeMessage(event) {
     const data = event.detail;
-    if (data.chat_id !== this.#state.currentChat.chat_id) {
+    if (this.#state.currentChat && data.chat_id !== this.#state.currentChat.chat_id) {
       return;
     }
     const component = document.getElementById(data.id);

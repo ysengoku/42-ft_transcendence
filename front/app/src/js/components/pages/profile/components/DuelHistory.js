@@ -185,7 +185,7 @@ export class UserDuelHistory extends HTMLElement {
 
   async filterItems(event) {
     event.preventDefault();
-    if (this.#state.items.length === 0 || this.#state.isLoading) {
+    if (this.#state.isLoading) {
       return;
     }
     const target = event.target.closest('button');
