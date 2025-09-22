@@ -1050,11 +1050,10 @@ export class Game extends HTMLElement {
     // Initially show only the first cardboard sign
     cardboardModels[1].visible = false;
     cardboardModels[2].visible = false;
-    if (this.renderOptimizer)
-    {
-      this.renderOptimizer.registerStatic(cardboardModels[0], "cardboard0");
-      this.renderOptimizer.registerStatic(cardboardModels[1], "cardboard1");
-      this.renderOptimizer.registerStatic(cardboardModels[2], "cardboard2");
+    if (this.renderOptimizer) {
+      this.renderOptimizer.registerStatic(cardboardModels[0], 'cardboard0');
+      this.renderOptimizer.registerStatic(cardboardModels[1], 'cardboard1');
+      this.renderOptimizer.registerStatic(cardboardModels[2], 'cardboard2');
     }
 
     // Desert environment - Cactus placement system

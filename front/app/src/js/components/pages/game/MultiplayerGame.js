@@ -1267,19 +1267,16 @@ export class MultiplayerGame extends HTMLElement {
 
     // Enhanced ball with 3D model (with fallback to geometry)
     const Ball = await (async (posX, posY, posZ) => {
-      let BallMesh;
       // Try to load 3D bullet model for the ball
       const bulletGlb = await modelCreate(posX, posY, posZ, 1, 1, 1, bullet);
       bulletGlb.rotateX(pi / 2);
-      BallMesh = bulletGlb;
 
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
       const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * this.#state.gameOptions.game_speed);
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
 
       return {
-        bulletGlb: BallMesh, // Keep original property name for compatibility
-        sphereMesh: BallMesh,
+        bulletGlb, // Keep original property name for compatibility
         sphereUpdate,
         velocity,
         temporalSpeed,
@@ -1729,17 +1726,13 @@ export class MultiplayerGame extends HTMLElement {
       clientState.bumper.cubeUpdate.x = myBumperData.x;
 
       // Remove processed inputs and re-apply unprocessed ones
-      let removedCount = 0;
-      let reappliedCount = 0;
       let i = 0;
       while (i < clientState.pendingInputs.length) {
         const input = clientState.pendingInputs[i];
         if (input.sequenceNumber <= lastProcessedMoveId) {
           clientState.pendingInputs.splice(i, 1);
-          removedCount++;
         } else {
           applyInputToBumper(input, clientState.bumper, SERVER_TICK_INTERVAL);
-          reappliedCount++;
           i++;
         }
       }
@@ -1939,11 +1932,10 @@ export class MultiplayerGame extends HTMLElement {
               cardboardModels.push(cardboardGlb);
             }
             // Initially show only the first cardboard sign
-            if (this.renderOptimizer)
-            {
-              this.renderOptimizer.registerStatic(cardboardModels[0], "cardboard0");
-              this.renderOptimizer.registerStatic(cardboardModels[1], "cardboard1");
-              this.renderOptimizer.registerStatic(cardboardModels[2], "cardboard2");
+            if (this.renderOptimizer) {
+              this.renderOptimizer.registerStatic(cardboardModels[0], 'cardboard0');
+              this.renderOptimizer.registerStatic(cardboardModels[1], 'cardboard1');
+              this.renderOptimizer.registerStatic(cardboardModels[2], 'cardboard2');
             }
             cardboardModels[1].visible = false;
             cardboardModels[2].visible = false;
@@ -2084,15 +2076,9 @@ export class MultiplayerGame extends HTMLElement {
         if (Ball.bulletGlb) {
           Ball.bulletGlb.position.set(interpolatedBallPos.x, 1, interpolatedBallPos.z);
         }
-        if (Ball.sphereMesh) {
-          Ball.sphereMesh.position.set(interpolatedBallPos.x, 1, interpolatedBallPos.z);
-        }
       } else {
         if (Ball.bulletGlb) {
           Ball.bulletGlb.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
-        }
-        if (Ball.sphereMesh) {
-          Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
         }
       }
 
