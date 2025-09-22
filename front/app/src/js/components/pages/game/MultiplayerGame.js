@@ -1060,9 +1060,10 @@ export class MultiplayerGame extends HTMLElement {
 
     // Camera configuration for optimal multiplayer game view
     var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
-    this.initRenderOptimizations(camera, scene);
 
-    let mixer;
+    // Initialize performance optimization systems early
+    this.initSharedMaterials();
+    this.initRenderOptimizations(camera, scene);
 
     // Advanced lighting setup for realistic rendering
 
@@ -1900,6 +1901,10 @@ export class MultiplayerGame extends HTMLElement {
                 this.renderOptimizer.registerDynamic(model, `furniture_p${index}_${modelIndex}`);
               });
             });
+            GameLogger.info(
+              'RenderOptimizer',
+              `Registered ${this.renderOptimizer.getStats().totalObjects} objects for culling`,
+            );
           }
           clientState.bumper = Bumpers[clientState.playerNumber - 1];
           clientState.enemyBumper = Bumpers[clientState.enemyNumber - 1];
@@ -1922,6 +1927,12 @@ export class MultiplayerGame extends HTMLElement {
               cardboardModels.push(cardboardGlb);
             }
             // Initially show only the first cardboard sign
+            if (this.renderOptimizer)
+            {
+              this.renderOptimizer.registerStatic(cardboardModels[0], "cardboard0");
+              this.renderOptimizer.registerStatic(cardboardModels[1], "cardboard1");
+              this.renderOptimizer.registerStatic(cardboardModels[2], "cardboard2");
+            }
             cardboardModels[1].visible = false;
             cardboardModels[2].visible = false;
           }
@@ -2160,9 +2171,6 @@ export class MultiplayerGame extends HTMLElement {
       interpolateEntities(timestamp - ENTITY_INTERPOLATION_DELAY);
 
       // Update all mixers for both bumpers
-      if (mixer) {
-        mixer.update(deltaAnimation);
-      }
       if (Bumpers && Bumpers[0]?.gltfStore?.mixer) {
         Bumpers[0].gltfStore.mixer.update(deltaAnimation);
       }

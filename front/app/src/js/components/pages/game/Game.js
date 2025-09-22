@@ -1050,6 +1050,12 @@ export class Game extends HTMLElement {
     // Initially show only the first cardboard sign
     cardboardModels[1].visible = false;
     cardboardModels[2].visible = false;
+    if (this.renderOptimizer)
+    {
+      this.renderOptimizer.registerStatic(cardboardModels[0], "cardboard0");
+      this.renderOptimizer.registerStatic(cardboardModels[1], "cardboard1");
+      this.renderOptimizer.registerStatic(cardboardModels[2], "cardboard2");
+    }
 
     // Desert environment - Cactus placement system
     const cacti = [];
@@ -1077,7 +1083,7 @@ export class Game extends HTMLElement {
         if (attempts > 50) break; // Prevent infinite loops
       } while (
         // Avoid the playing field area
-        (x > -13.65 && x < 13.65 && z > -15 && z < 15) ||
+        (x > -13.65 && x < 13.65 && z > -16 && z < 16) ||
         // Maintain minimum distance from other cacti
         placedCacti.some((cactus) => Math.sqrt((x - cactus.x) ** 2 + (z - cactus.z) ** 2) < minDistance)
       );
@@ -1212,7 +1218,7 @@ export class Game extends HTMLElement {
 
       // Apply table rotation based on player position
       if (posZ < 0) {
-        tableGlb.rotation.z = Math.PI;
+        tableGlb.rotation.z = pi;
       }
 
       modelsGlb.forEach((element) => {
@@ -1560,7 +1566,7 @@ export class Game extends HTMLElement {
           ballPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
         }
 
-        if (Bumpers[1].lenghtHalf < 2.0) {
+        if (Bumpers[1].lengthHalf < 2.0 || Bumpers[1].speed != BUMPER_SPEED) {
           ballPredictedPos.x += (Math.random() - 0.5) * errorMargin * 0.6;
         } else {
           ballPredictedPos.x += -errorMargin + Math.round(Math.random()) * (errorMargin * 2);
