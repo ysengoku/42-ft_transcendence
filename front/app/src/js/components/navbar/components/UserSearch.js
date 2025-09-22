@@ -369,7 +369,7 @@ export class UserSearch extends HTMLElement {
     <form class="d-flex mx-3 mt-3 mb-2" role="search">
       <div class="input-group mt-2">
         <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
-        <input class="form-control" type="search" placeholder="Find user(s)" aria-label="Search" autocomplete="off">
+        <input class="form-control" type="search" name="usersearch" placeholder="Find user(s)" aria-label="Search" autocomplete="off">
       </div>
     </form>
     <div class="ps-3 pe-2">

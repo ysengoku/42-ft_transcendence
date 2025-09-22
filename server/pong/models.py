@@ -31,19 +31,12 @@ def _calculate_elo_change(a: int, b: int, outcome: float, k_factor: int = 32) ->
 
 
 class MatchQuerySet(models.QuerySet):
-    MINUMUM_ELO = 100
-    MAXIMUM_ELO = 3000
-    K_FACTOR = 32
-    WIN = 1
-    DRAW = 0.5
-    LOSS = 0
-
     def calculate_elo_change_for_players(self, winner_elo: int, loser_elo: int) -> tuple[int, int, int]:
-        elo_change = _calculate_elo_change(winner_elo, loser_elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
-        if (loser_elo - elo_change) < MatchQuerySet.MINUMUM_ELO:
-            elo_change = loser_elo - MatchQuerySet.MINUMUM_ELO
-        elif (winner_elo + elo_change) > MatchQuerySet.MAXIMUM_ELO:
-            elo_change = MatchQuerySet.MAXIMUM_ELO - winner_elo
+        elo_change = _calculate_elo_change(winner_elo, loser_elo, self.model.WIN, self.model.K_FACTOR)
+        if (loser_elo - elo_change) < self.model.MINIMUM_ELO:
+            elo_change = loser_elo - self.model.MINIMUM_ELO
+        elif (winner_elo + elo_change) > self.model.MAXIMUM_ELO:
+            elo_change = self.model.MAXIMUM_ELO - winner_elo
         winner_elo += elo_change
         loser_elo -= elo_change
         return winner_elo, loser_elo, elo_change
@@ -54,8 +47,9 @@ class MatchQuerySet(models.QuerySet):
         loser_profile_or_id: Profile | int,
         winners_score: int,
         losers_score: int,
-        ranked: bool = True,
         date: datetime | None = None,
+        ranked: bool = True,
+        should_save: bool = True,
     ) -> tuple["Match", Profile, Profile] | None:
         """
         Resolves all elo calculations, updates profiles of players,
@@ -98,8 +92,10 @@ class MatchQuerySet(models.QuerySet):
                 losers_elo=losers_elo,
                 date=date,
             )
-            resolved_match.save()
-            Profile.objects.bulk_update([winner, loser], ["elo"])
+
+            if should_save:
+                resolved_match.save()
+                Profile.objects.bulk_update([winner, loser], ["elo"])
 
         return resolved_match, winner, loser
 
@@ -155,6 +151,13 @@ class MatchQuerySet(models.QuerySet):
 
 class Match(models.Model):
     """Represents a finished match between two players."""
+
+    MINIMUM_ELO = 100
+    MAXIMUM_ELO = 3000
+    K_FACTOR = 32
+    WIN = 1
+    DRAW = 0.5
+    LOSS = 0
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     winner = models.ForeignKey(Profile, related_name="won_matches", on_delete=models.SET_NULL, null=True, blank=True)
