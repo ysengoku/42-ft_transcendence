@@ -27,13 +27,9 @@ export class TournamentBracketOngoing extends HTMLElement {
 
   connectedCallback() {
     this.render();
-    const queryParams = new URLSearchParams({
-      userPlayerName: this.#state.userAlias,
-      opponentPlayerName: this.#state.opponentAlias,
-    }).toString();
     requestAnimationFrame(() => {
       setTimeout(() => {
-        router.redirect(`multiplayer-game/${this.#state.gameId}?${queryParams}`);
+        router.redirect(`multiplayer-game/${this.#state.gameId}`);
       }, 1500);
     });
   }
