@@ -1554,6 +1554,8 @@ export class Game extends HTMLElement {
 
         if (Bumpers[1].lengthHalf < 2.0 || Bumpers[1].speed != BUMPER_SPEED) {
           ballPredictedPos.x += (Math.random() - 0.5) * errorMargin * 0.6;
+        } else if (Bumpers[1].lengthHalf > 3.0 || Bumpers[0].speed != BUMPER_SPEED) {
+          ballPredictedPos.x += -(errorMargin * 3) + Math.round(Math.random()) * (errorMargin * 3);
         } else {
           ballPredictedPos.x += -errorMargin + Math.round(Math.random()) * (errorMargin * 2);
         }
