@@ -243,7 +243,7 @@ GITHUB_CLIENT_SECRET = env("GITHUB_CLIENT_SECRET")
 
 OAUTH_ALLOWED_SCOPES = {
     "github": {"read:user", "user:email"},
-    "42": {"public", "profile"},
+    "42": {"public"},
 }
 
 # OAuth
