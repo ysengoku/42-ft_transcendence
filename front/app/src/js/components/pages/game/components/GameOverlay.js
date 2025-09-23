@@ -218,6 +218,8 @@ export class GameOverlay extends HTMLElement {
 
   createPlayerResultElement(player, eloChange, showElo) {
     const element = document.createElement('div');
+    element.style.width = '40%';
+    element.classList.add('d-flex', 'flex-column', 'justify-content-center', 'align-items-center', 'p-2');
     element.innerHTML = this.playerResultTemplate();
     const result = element.querySelector('.match-result');
     player.winner
@@ -294,6 +296,13 @@ export class GameOverlay extends HTMLElement {
     #overlay-message-title {
       font-family: 'van dyke';
     }
+    .overlay-player-wrapper {
+      width: 100%;
+    }
+    .overlay-player-name {
+      width: 100%;
+      overflow-wrap: anywhere;
+    }
     #overlay-button1,
     #overlay-button2 {
       color: rgba(var(--pm-gray-100-rgb), 0.9) !important;
@@ -326,7 +335,7 @@ export class GameOverlay extends HTMLElement {
       `,
     [OVERLAY_TYPE.GAMEOVER]: `
       <div id="overlay-message-title" class="fs-2 mb-3">Game finished</div>
-      <div id="overlay-game-result" class="d-flex flex-row justify-content-center align-items-center ap-3 pb-2"></div>
+      <div id="overlay-game-result" class="d-flex flex-row justify-content-center align-items-center pb-2 w-100 gap-3"></div>
       <div class="d-flex flex-column mt-4">
         <button id="overlay-button1" class="btn fw-bold">Find another duel</button>
         <button id="overlay-button2" class="btn fw-bold">Back to Saloon</button>
@@ -350,7 +359,7 @@ export class GameOverlay extends HTMLElement {
 
   playerResultTemplate() {
     return `
-    <div class="d-flex flex-column justify-content-center align-items-center mx-4 p-3">
+    <div class="overlay-player-wrapper d-flex flex-column justify-content-center align-items-center p-2">
       <div class="match-result fs-5 fw-bold pb-2"></div>
       <img class="avatar-l rounded-circle mb-2" />
       <div class="overlay-player-name fs-4"></div>

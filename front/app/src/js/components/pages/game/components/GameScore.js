@@ -86,13 +86,13 @@ export class GameScore extends HTMLElement {
   template() {
     return `
     <div id="scoreboard-wrapper" class="d-flex flex-row justify-content-center m-3">
-      <div id="game-score-board" class="wood-board d-flex flex-row justify-content-center align-items-center px-2 py-1 gap-4">
-        <div class="d-flex flex-column align-items-center justify-content-center">
+      <div id="game-score-board" class="wood-board d-flex flex-row justify-content-center align-items-center px-2 py-1 gap-2">
+        <div class="game-score-player d-flex flex-column align-items-center justify-content-center">
           <p id="game-name-player1" class="game-player-name"></p>
           <p id="game-score-player1" class="game-score fs-2"></p>
         </div>
         <div id="game-timer-wrapper"></div>
-        <div class="d-flex flex-column align-items-center justify-content-center">
+        <div class="game-score-player d-flex flex-column align-items-center justify-content-center">
           <p id="game-name-player2" class="game-player-name"></p>
           <p id="game-score-player2" class="game-score fs-2"></p>
         </div>
@@ -117,10 +117,19 @@ export class GameScore extends HTMLElement {
       font-family: 'van dyke';
       width: 24rem;
     }
+    .game-score-player {
+      width: 6rem;
+    }
     .game-player-name {
       font-family: 'Crimson Pro';
       font-weight: bold;
       margin-bottom: -.4rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-all;
+      display: -webkit-box; /* Compatible for Firefox */
+      -webkit-line-clamp: 1; /* Compatible for Firefox by combining with display: -webkit-box; */
+      -webkit-box-orient: vertical;
     }
     .game-score {
       font-family: 'van dyke';
