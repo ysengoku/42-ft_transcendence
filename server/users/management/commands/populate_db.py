@@ -104,7 +104,7 @@ def generate_users() -> None:
     # name, real_elo, dynamic_elo, avatar_path, nickname
     users_data = [
         ("sad_hampter", 100, 300, "sad_hampter.jpg", "little_rat"),
-        ("Juan", 150, 250, "", ""),
+        ("Juan", 150, 250, "Goober.png", ""),
         ("Martine", 200, 200, "martine.jpg", "The_Queen"),
         ("Pedro", 200, 400, "pedro.jpg", "The_original"),
         ("Anya", 300, 250, "", ""),
@@ -131,13 +131,13 @@ def generate_users() -> None:
         ("Grandpa", 2400, 300, "grandpa.jpg", "Old_grumpy"),
         ("faboussa", 2500, 200, "", ""),
         ("Yuko", 2500, 200, "", ""),
-        ("emuminov", 2600, 300, "", ""),
+        ("emuminov", 2600, 300, "emuminov.png", ""),
         ("Darksmelo", 2600, 300, "darksmelo.png", "Hey_yeH"),
-        ("celiastral", 2600, 150, "", ""),
+        ("celiastral", 2600, 150, "Celiastral.png", ""),
         ("Marie", 2600, 100, "marie.jpg", "Good_girl"),
         ("Grandma", 2700, 200, "grandma.jpg", "Old_hag"),
         ("Tama", 2750, 100, "tama.jpg", "flower_girl"),
-        ("LifeEnjoyer", 3000, 0, "", ""),
+        ("LifeEnjoyer", 3000, 0, "life_enjoyer.png", ""),
     ]
 
     users_to_create = []
