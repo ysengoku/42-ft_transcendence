@@ -1,6 +1,6 @@
 import { auth } from '@auth';
 import { API_ENDPOINTS } from '@api';
-import { internalServerErrorAlert, unknowknErrorToast } from '@utils';
+import { internalServerErrorAlert, unknownErrorToast } from '@utils';
 
 /**
  * Refreshes the access token using the provided CSRF token.
@@ -33,12 +33,12 @@ export async function refreshAccessToken(csrfToken) {
         ++retries;
         log.error(`Refresh failed on retry with status ${response.status}. Retrying...`);
       } else {
-        unknowknErrorToast();
+        unknownErrorToast();
         log.error(`Refresh failed with status ${response.status}`);
         return { success: false, status: response.status };
       }
     }
-    unknowknErrorToast();
+    unknownErrorToast();
     log.error(`Refresh failed with status ${response.status}`);
     return { success: false, status: response.status };
   }
