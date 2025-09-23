@@ -20,7 +20,7 @@ const compat = new FlatCompat({
 export default [
   {
     files: ['src/**/*.js'],
-    ignores: ['node_modules/', 'dist/', 'server/static/'],
+    ignores: ['node_modules/', 'dist/', 'server/static/', 'public/'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
