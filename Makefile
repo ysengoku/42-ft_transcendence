@@ -15,6 +15,9 @@ NGINX_SERVICE = nginx
 # NODE_ENV is used to determine if the overall build is dev or prod (for the server and nginx containers too)
 NODE_ENV = development
 
+prod: NODE_ENV=production
+prod: up
+
 ensure-env:
 	@if [ ! -f .env ]; then \
 		echo ".env file not found, copying from .env.example"; \
@@ -32,9 +35,6 @@ up: ensure-env update-ip
 
 dev: ensure-env update-ip
 	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) --profile development up --build
-
-prod: NODE_ENV=production
-prod: up
 
 down:
 	docker compose -f $(DOCKER_COMPOSE) down
