@@ -867,12 +867,12 @@ export class MultiplayerGame extends HTMLElement {
         if (clientState.bumper?.dirZ > 0) clientState.movesLeft = true;
         else clientState.movesRight = true;
         // Handle animations for player models
-        this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 0, 0.1);
+        this.handleAnimations(clientState.bumper, clientState.bumper?.currentAction, 0, 0.1);
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         if (clientState.bumper?.dirZ > 0) clientState.movesRight = true;
         else clientState.movesLeft = true;
         // Handle animations for player models
-        this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 5, 0.1);
+        this.handleAnimations(clientState.bumper, clientState.bumper?.currentAction, 5, 0.1);
       }
 
       e.preventDefault();
@@ -894,12 +894,12 @@ export class MultiplayerGame extends HTMLElement {
         if (clientState.bumper?.dirZ > 0) clientState.movesLeft = false;
         else clientState.movesRight = false;
         // Return to idle animation
-        this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 2, 0.5);
+        this.handleAnimations(clientState.bumper, clientState.bumper?.currentAction, 2, 0.5);
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         if (clientState.bumper?.dirZ > 0) clientState.movesRight = false;
         else clientState.movesLeft = false;
         // Return to idle animation
-        this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 2, 0.5);
+        this.handleAnimations(clientState.bumper, clientState.bumper?.currentAction, 2, 0.5);
       }
 
       e.preventDefault();
