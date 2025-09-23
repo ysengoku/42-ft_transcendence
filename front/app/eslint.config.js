@@ -20,7 +20,6 @@ const compat = new FlatCompat({
 export default [
   {
     files: ['src/**/*.js'],
-    ignores: ['node_modules/', 'dist/', 'server/static/', 'public/', 'basis_transcoder.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
@@ -45,6 +44,9 @@ export default [
       'no-undef': 'off',
       'prettier/prettier': 'error',
     },
+  },
+  {
+    ignores: ['node_modules/', 'dist/', 'server/static/', 'public/'],
   },
   ...compat.extends('plugin:prettier/recommended'),
 ];
