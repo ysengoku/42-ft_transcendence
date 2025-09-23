@@ -163,7 +163,7 @@ describe('renderDynamicUrlComponent', () => {
 describe('navigate', () => {
   beforeEach(() => {
     router.routes.clear();
-    router.isFristLoad = false;
+    router.isFirstLoad = false;
     router.beforeunloadCallback = null;
     vi.restoreAllMocks();
   });
@@ -197,7 +197,7 @@ describe('navigate', () => {
   });
 
   it('should use replaceState if first load is true', async () => {
-    router.isFristLoad = true;
+    router.isFirstLoad = true;
     const handleRouteSpy = vi.spyOn(router, 'handleRoute');
     const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
     const pushStateSpy = vi.spyOn(window.history, 'pushState');
@@ -282,7 +282,7 @@ describe('navigate', () => {
   });
 
   it('should pass URLSearchParams to handleRoute and include query string in pushState URL when query string provided', async () => {
-    router.isFristLoad = false;
+    router.isFirstLoad = false;
     router.beforeunloadCallback = null;
 
     const handleRouteSpy = vi.spyOn(router, 'handleRoute');
@@ -306,7 +306,7 @@ describe('navigate', () => {
   });
 
   it('should pass URLSearchParams to handleRoute and include object queryParams in pushState URL', async () => {
-    router.isFristLoad = false;
+    router.isFirstLoad = false;
     router.beforeunloadCallback = null;
 
     const handleRouteSpy = vi.spyOn(router, 'handleRoute');

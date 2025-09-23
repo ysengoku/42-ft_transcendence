@@ -263,7 +263,7 @@ When the DOM is fully loaded (`DOMContentLoaded` event), the app performs the fo
 
 - **Router initialization**: Initializes the router by calling `router.init()`, which sets up history and link event listeners.
 
-- **Alert Dismissal**: Activates alert dismissal functionality by calling `addDissmissAlertListener()`.
+- **Alert Dismissal**: Activates alert dismissal functionality by calling `addDismissAlertListener()`.
 
 - **Initial navigation**: Retrieves the current URL path and query parameters and calls `router.navigate()` to render the correct component.
 
