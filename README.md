@@ -276,8 +276,8 @@ Separate container that periodically sends requests to the Daphne server to perf
   <tr>
     <td align="center" style="padding: 8px; vertical-align: middle;">
       <a href="https://github.com/emuminov" style="text-decoration: none;">
-        <img src="./assets/profile/emuminov.png" width="48px" alt="emuminov" /><br />
-        <p>emuminov</p>
+        <img src="./assets/profile/emuminov.png" width="52px" alt="emuminov" /><br />
+        <b>emuminov</b>
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
@@ -289,8 +289,8 @@ Separate container that periodically sends requests to the Daphne server to perf
   <tr>
     <td align="center" style="padding: 8px; vertical-align: middle;">
       <a href="https://github.com/faboussard" style="text-decoration: none;">
-        <img src="./assets/profile/faboussard.png" width="48px;" alt="Fanny_BOUSSARD"/><br />
-        <sub><b>faboussard</b></sub>
+        <img src="./assets/profile/faboussard.png" width="52px;" alt="Fanny_BOUSSARD"/><br />
+        <b>faboussard</b>
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
@@ -302,8 +302,8 @@ Separate container that periodically sends requests to the Daphne server to perf
   <tr>
     <td align="center" style="padding: 8px; vertical-align: middle;">
       <a href="https://github.com/melobern" style="text-decoration: none;">
-        <img src="./assets/profile/melobern.png" width="48px" alt="melobern" /><br />
-        <p>melobern</p>
+        <img src="./assets/profile/melobern.png" width="52px" alt="melobern" /><br />
+        <b>melobern</b>
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
@@ -315,8 +315,8 @@ Separate container that periodically sends requests to the Daphne server to perf
   <tr>
     <td align="center" style="padding: 8px; vertical-align: middle;">
       <a href="https://github.com/Celiastral" style="text-decoration: none;">
-        <img src="./assets/profile/Celiastral.png" width="48px" alt="Celiastral" /><br />
-        <p>celiastral</p>
+        <img src="./assets/profile/Celiastral.png" width="52px" alt="Celiastral" /><br />
+        <b>celiastral</b>
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
@@ -328,8 +328,8 @@ Separate container that periodically sends requests to the Daphne server to perf
   <tr>
     <td align="center" style="padding: 8px; vertical-align: middle;">
       <a href="https://github.com/ysengoku" style="text-decoration: none;">
-        <img src="./assets/profile/ysengoku.png" width="48px" alt="Yuko SENGOKU" /><br />
-        <p>ysengoku</p>
+        <img src="./assets/profile/ysengoku.png" width="52px" alt="Yuko SENGOKU" /><br />
+        <b>ysengoku</b>
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
