@@ -19,9 +19,9 @@ from users.schemas import OAuthCallbackParams
 logger = logging.getLogger("server")
 
 
-def _redirect_error(msg: str, status: int) -> HttpResponseRedirect:
+def _oauth_error(msg: str, status: int):
     """Unified error redirect to frontend with proper encoding."""
-    return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(str(msg))}&code={status}")
+    raise HttpError(503, msg)
 
 
 oauth2_router = Router()
@@ -42,20 +42,18 @@ def _check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
     We tolerate redirects, what counts is that the provider is reachable.
     """
     url = config.get("oauth_uri")
-    if not url:
-        return True, ""
-
     try:
         resp = requests.head(url, timeout=OAUTH_API_HEALTH_CHECK_TIMEOUT, allow_redirects=True)
+        print(resp)
         if resp.status_code in (200, 204, 301, 302, 307, 308):
             return True, ""
         if resp.status_code == 405:  # noqa: PLR2004
             resp = requests.get(url, timeout=OAUTH_API_HEALTH_CHECK_TIMEOUT, allow_redirects=True)
             if resp.status_code in (200, 204):
                 return True, ""
-        return False, "Provider is temporarily unavailable"
+        return False, f"{platform.capitalize()} is temporarily unavailable"
     except requests.RequestException:
-        return False, "Could not connect to provider"
+        return False, f"Could not connect to {platform.capitalize()}"
 
 
 def _validate_scopes(granted_scopes: set, platform: str) -> str | None:
@@ -79,7 +77,7 @@ def _validate_callback_params(
 
     is_available, error_msg = _check_api_availability(platform, config)
     if not is_available:
-        return _redirect_error(error_msg, 503)
+        return _oauth_error(error_msg, 503)
 
     params = request.GET
     error = params.get("error")
@@ -88,20 +86,20 @@ def _validate_callback_params(
     state = params.get("state")
 
     if error:
-        return _redirect_error(f"{error}: {error_description}", 422)
+        return _oauth_error(f"{error}: {error_description}", 422)
     if not code or not state:
-        return _redirect_error("Missing code or state", 422)
+        return _oauth_error("Missing code or state", 422)
 
     oauth_connection = OauthConnection.objects.for_state_and_pending_status(state).first()
     if not oauth_connection:
         logger.warning("OAuth callback with invalid state: state=%s platform=%s", state, platform)
-        return _redirect_error("Invalid state", 422)
+        return _oauth_error("Invalid state", 422)
 
     state_error = oauth_connection.check_state_and_validity(platform, state)
     if state_error:
         error_message, status_code = state_error
         logger.warning("OAuth state validation failed: state=%s platform=%s error=%s", state, platform, error_message)
-        return _redirect_error(error_message, status_code)
+        return _oauth_error(error_message, status_code)
 
     oauth_connection.mark_state_as_used()
 
@@ -121,7 +119,7 @@ def oauth_authorize(request: HttpRequest, platform: str) -> JsonResponse:
 
     is_available, error_msg = _check_api_availability(platform, config)
     if not is_available:
-        return _redirect_error(error_msg, 503)
+        return _oauth_error(error_msg, 503)
 
     state = hashlib.sha256(os.urandom(32)).hexdigest()
     OauthConnection.objects.create_pending_connection(state, platform)
@@ -162,7 +160,7 @@ def oauth_callback(  # noqa: PLR0911
     provider_access, token_error = oauth_connection.request_access_token(config, code)
     if token_error:
         msg, status = token_error
-        return _redirect_error(msg, status)
+        return _oauth_error(msg, status)
 
     provider_access_token, granted_scopes = provider_access
     scope_error = _validate_scopes(granted_scopes, platform)
@@ -173,17 +171,17 @@ def oauth_callback(  # noqa: PLR0911
             list(granted_scopes),
             scope_error,
         )
-        return _redirect_error(scope_error, 422)
+        return _oauth_error(scope_error, 422)
 
     user_info, user_error = oauth_connection.get_user_info(config, provider_access_token)
     if user_error:
         error_message, status_code = user_error
-        return _redirect_error(error_message, status_code)
+        return _oauth_error(error_message, status_code)
 
     user, user_creation_error = oauth_connection.create_or_update_user(user_info)
     if user_creation_error:
         error_message, status_code = user_creation_error
-        return _redirect_error(error_message, status_code)
+        return _oauth_error(error_message, status_code)
 
     app_access_token_jwt, refresh_token_instance = RefreshToken.objects.create(user)
     logger.info(

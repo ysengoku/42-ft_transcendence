@@ -11,7 +11,7 @@ from django.utils import timezone
 logger = logging.getLogger("server")
 
 # OAuth configuration constants
-OAUTH_API_HEALTH_CHECK_TIMEOUT = 2.0  # seconds
+OAUTH_API_HEALTH_CHECK_TIMEOUT = 10.0  # seconds
 OAUTH_TOKEN_REQUEST_TIMEOUT = 10  # seconds
 OAUTH_USER_INFO_TIMEOUT = 10  # seconds
 OAUTH_AVATAR_DOWNLOAD_TIMEOUT = 5  # seconds

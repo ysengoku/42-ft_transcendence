@@ -43,8 +43,14 @@ export class OAuth extends HTMLElement {
       const data = await response.json();
       location.href = data.auth_url;
     } else {
-      log.error('OAuth initialization failed:', response.statusText);
-      unknownErrorToast();
+      log.error('OAuth initialization failed:', response);
+      if (response.status === 503) {
+        unknownErrorToast(`${platform} is temporarily unavailable. Please try again later.`);
+      } else if (response.status === 429) {
+        unknownErrorToast('Too many requests. Please try again later.');
+      } else {
+        unknownErrorToast();
+      }
     }
   }
 
