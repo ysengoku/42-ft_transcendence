@@ -1,6 +1,6 @@
 import { router } from '@router';
 import { auth, getCSRFTokenfromCookies, refreshAccessToken } from '@auth';
-import { sessionExpiredToast, internalServerErrorAlert, unknowknErrorToast } from '@utils';
+import { sessionExpiredToast, internalServerErrorAlert, unknownErrorToast } from '@utils';
 
 /**
  * Makes an API request with the specified method and endpoint.
@@ -122,7 +122,7 @@ const handlers = {
         return { success: false, status: 429, message };
       default:
         router.redirect('/');
-        unknowknErrorToast();
+        unknownErrorToast();
         break;
     }
     auth.clearStoredUser();
@@ -170,7 +170,7 @@ const handlers = {
             responseData = {};
           }
         }
-        return { success: true, status: response.status, data: responseData };
+        return { success: true, status: retryResponse.status, data: responseData };
       }
     }, 3000);
     return { success: false, status: 500, msg: message };
@@ -201,7 +201,7 @@ const handlers = {
     }
     const excludedStatusCodes = [401, 403, 404, 422, 429];
     if (!excludedStatusCodes.includes(response.status)) {
-      unknowknErrorToast();
+      unknownErrorToast();
     }
     return { success: false, status: response.status, msg: errorMsg };
   },
@@ -215,7 +215,7 @@ const handlers = {
    */
   exception: (error) => {
     log.error('API request failed:', error);
-    unknowknErrorToast();
+    unknownErrorToast();
     return { success: false, status: 0, msg: error };
   },
 };

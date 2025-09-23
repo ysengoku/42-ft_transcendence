@@ -18,14 +18,14 @@ import {
 
 import { showFormErrorFeedback } from './formFeedback';
 
-import { showToastNotification, TOAST_TYPES, sessionExpiredToast, unknowknErrorToast } from './toastnotification';
+import { showToastNotification, TOAST_TYPES, sessionExpiredToast, unknownErrorToast } from './toastnotification';
 
 import {
   ALERT_TYPE,
   showAlertMessage,
   showAlertMessageForDuration,
   removeAlert,
-  addDissmissAlertListener,
+  addDismissAlertListener,
   internalServerErrorAlert,
 } from './alertMessage';
 
@@ -55,11 +55,11 @@ export {
   showToastNotification,
   TOAST_TYPES,
   sessionExpiredToast,
-  unknowknErrorToast,
+  unknownErrorToast,
   ALERT_TYPE,
   showAlertMessage,
   showAlertMessageForDuration,
   removeAlert,
-  addDissmissAlertListener,
+  addDismissAlertListener,
   internalServerErrorAlert,
 };

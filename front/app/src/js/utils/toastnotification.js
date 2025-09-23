@@ -87,7 +87,7 @@ export function sessionExpiredToast() {
   showToastNotification(message, TOAST_TYPES.WARNING);
 }
 
-export function unknowknErrorToast() {
+export function unknownErrorToast() {
   const message = 'An unexpected error occurred. Please try again later.';
   showToastNotification(message, TOAST_TYPES.ERROR);
 }

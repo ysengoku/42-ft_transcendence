@@ -1,5 +1,5 @@
 import { API_ENDPOINTS } from '@api';
-import { unknowknErrorToast } from '@utils';
+import { unknownErrorToast } from '@utils';
 
 export class OAuth extends HTMLElement {
   constructor() {
@@ -44,7 +44,7 @@ export class OAuth extends HTMLElement {
       location.href = data.auth_url;
     } else {
       log.error('OAuth initialization failed:', response.statusText);
-      unknowknErrorToast();
+      unknownErrorToast();
     }
   }
 
