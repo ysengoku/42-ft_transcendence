@@ -119,7 +119,7 @@ class User(AbstractUser):
             raise ValidationError({"username": ["A user with that username already exists."]})
 
         if (
-            "email" not in kwargs["exclude"]
+            "email" not in kwargs.get("exclude", set())
             and not self.get_oauth_connection()
             and User.objects.filter(email=self.email).exists()
         ):
@@ -135,7 +135,7 @@ class User(AbstractUser):
         if not self.password and not self.get_oauth_connection():
             raise ValidationError({"password": ["This connection type requires a password."]})
         if not self.email and not self.get_oauth_connection():
-            raise ValidationError({"password": ["Email is required."]})
+            raise ValidationError({"email": ["Email is required."]})
 
     def update_user(self, data, new_profile_picture: UploadedFile | None):
         """

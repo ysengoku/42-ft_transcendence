@@ -7,7 +7,7 @@ import {
   isEqual,
   internalServerErrorAlert,
   sessionExpiredToast,
-  unknowknErrorToast,
+  unknownErrorToast,
   showAlertMessageForDuration,
   ALERT_TYPE,
 } from '@utils';
@@ -169,7 +169,7 @@ const auth = (() => {
                 internalServerErrorAlert();
                 return { success: false, status: 500 };
               default:
-                unknowknErrorToast();
+                unknownErrorToast();
                 return { success: false, status: refreshTokenResponse.status };
             }
           }

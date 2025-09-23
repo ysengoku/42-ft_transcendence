@@ -1,4 +1,4 @@
-import { addDissmissAlertListener } from '@utils';
+import { addDismissAlertListener } from '@utils';
 
 /**
  * Router module for handling client-side navigation.
@@ -9,7 +9,7 @@ const router = (() => {
     constructor() {
       this.routes = new Map();
       this.pathToReplace = new Set(['/reset-password', '/mfa-verification', '/user-not-found', '/error']);
-      this.isFristLoad = true;
+      this.isFirstLoad = true;
       this.currentComponent = null;
       this.beforeunloadCallback = null;
     }
@@ -193,12 +193,12 @@ const router = (() => {
         }
       }
 
-      const shouldReplace = redirect || this.isFristLoad || this.pathToReplace.has(path);
+      const shouldReplace = redirect || this.isFirstLoad || this.pathToReplace.has(path);
       const historyUpdateMethod = shouldReplace ? 'replaceState' : 'pushState';
       const queryParamsString = queryParamsObject.toString();
       const fullPath = queryParamsString ? `${path}?${queryParamsString}` : path;
       window.history[historyUpdateMethod]({}, '', fullPath);
-      this.isFristLoad = false;
+      this.isFirstLoad = false;
       this.handleRoute(queryParamsObject);
     }
 
@@ -280,7 +280,7 @@ router.addRoute('/error', 'error-page');
  */
 document.addEventListener('DOMContentLoaded', async () => {
   router.init();
-  addDissmissAlertListener();
+  addDismissAlertListener();
   const currentPath = window.location.pathname || '/';
   const queryParams = new URLSearchParams(window.location.search);
 

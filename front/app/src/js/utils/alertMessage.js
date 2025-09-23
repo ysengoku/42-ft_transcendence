@@ -68,7 +68,7 @@ export function removeAlert() {
 /**
  * Adds event listeners to dismiss the alert message on certain events.
  */
-export function addDissmissAlertListener() {
+export function addDismissAlertListener() {
   document.addEventListener('click', removeAlert);
   window.addEventListener('popstate', removeAlert);
   window.addEventListener('pushstate', removeAlert);
@@ -83,7 +83,7 @@ function alertContentTemplate(type) {
   return `
     <div class="alert ${type} alert-dismissible fade show mt-2" role="alert">
       <div class="d-flex flex-column align-items-center ms-5 p-3">
-        <i id="alert-icon" class="class="bi mb-2" style="font-size: 3rem"></i>
+        <i id="alert-icon" class="bi mb-2" style="font-size: 3rem"></i>
         <div id="alert-header" class="fs-4 fw-bold mb-2"></div>
         <div id="alert-message" class="text-center"></div>
       </div>
