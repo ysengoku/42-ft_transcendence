@@ -110,7 +110,7 @@ export class Game extends HTMLElement {
     // Create scoreboard with appropriate player names
     this.createUIElement('scoreElement', 'game-scoreboard', (element) => {
       if (this.#state.gameType === 'ai') {
-        element.setNames('Player1', 'AI player');
+        element.setNames('You', 'AI player');
       }
     });
 
