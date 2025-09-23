@@ -43,7 +43,7 @@ jobs:
         run: npm test
 
       - name: Check code format (Prettier)
-        working-directory: ./front/app
+        working-directory: ./front/app/src
         run: |
           if ! npm run format; then
             echo "::warning title=Prettier Format Check Failed::Code formatting issues detected."
@@ -52,7 +52,7 @@ jobs:
         continue-on-error: true
 
       - name: Run linter
-        working-directory: ./front/app
+        working-directory: ./front/app/src
         run: |
           if ! npm run lint; then
             echo "::warning title=ESLint Check Failed::Linting issues detected."
