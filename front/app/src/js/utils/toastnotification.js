@@ -42,7 +42,7 @@ export function showToastNotification(message, type = TOAST_TYPES.INFO) {
   const toast = document.querySelector('.toast');
   const toastBodyWrapper = document.querySelector('.toast-body-wrapper');
   const notificationDropdown = document.getElementById('notifications-dropdown');
-  const notificationList = document.querySelector('notifications-list');
+  const notificationList = document.querySelector('.notifications-list');
 
   switch (type) {
     case TOAST_TYPES.NOTIFICATION:
